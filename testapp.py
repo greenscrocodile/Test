@@ -133,7 +133,7 @@ with st.sidebar:
 
     # --- VALIDATION ---
     if s_challan and not s_challan.isdigit():
-        st.error("Challan Number must contain numbers only.")
+        st.error("Challan Number must contain Numbers only.")
 
     st.divider()
     TEMPLATE_NAME = "Test.docx"
@@ -144,16 +144,16 @@ with st.sidebar:
         with open(TEMPLATE_NAME, "rb") as f:
             template_bytes = f.read()
     else:
-        st.error(f"❌ {TEMPLATE_NAME} missing!")
+        st.error(f"❌ {TEMPLATE_NAME} Missing!")
 
     data_file = st.file_uploader("Upload Master Data (.xlsx)", type=["xlsx"])
 
     if not st.session_state.locked:
         if st.button("Confirm Setup", type="primary"):
             if not s_challan or not s_challan.isdigit():
-                st.error("Enter valid numeric Challan Number.")
+                st.error("Enter a valid Numeric Challan Number.")
             elif not template_bytes:
-                st.error("Template not loaded.")
+                st.error("Template not Loaded.")
             elif not data_file:
                 st.error("Upload Master Data.")
             else:
