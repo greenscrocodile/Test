@@ -307,7 +307,7 @@ if st.session_state.locked:
                                     'bank': bank_name, 'type': i_type, 'no': i_no, 'date': i_date.strftime("%d.%m.%Y")
                                 })
                                 st.rerun()
-                            else: st.error("Check Bank/No.")
+                            else: st.error("Check Bank Name and Cheque/DD No.")
 
                     # ALIGNMENT: Uniform font and line spacing for instrument list
                     for idx, inst in enumerate(st.session_state.temp_instruments):
