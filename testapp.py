@@ -133,7 +133,7 @@ with st.sidebar:
 
     # --- VALIDATION ---
     if s_challan and not s_challan.isdigit():
-        st.error("Starting Challan must contain numbers only.")
+        st.error("Challan Number must contain numbers only.")
 
     st.divider()
     TEMPLATE_NAME = "Test.docx"
@@ -151,7 +151,7 @@ with st.sidebar:
     if not st.session_state.locked:
         if st.button("Confirm Setup", type="primary"):
             if not s_challan or not s_challan.isdigit():
-                st.error("Enter valid numeric Starting Challan.")
+                st.error("Enter valid numeric Challan Number.")
             elif not template_bytes:
                 st.error("Template not loaded.")
             elif not data_file:
