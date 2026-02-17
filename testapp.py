@@ -294,6 +294,7 @@ if st.session_state.locked:
                         f1, f2, f3 = st.columns(3)
                         with f1: 
                             if restricted_mode:
+                                st.warning("🔒 Leading Locked")
                                 st.info(f"Mode: {restricted_mode}")
                                 i_type = restricted_mode
                             else:
