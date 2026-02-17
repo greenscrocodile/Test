@@ -276,5 +276,82 @@ if st.session_state.locked:
             else:
                 st.success(f"**Found:** {row['Name']} | **Total Amt:** ₹{format_indian_currency(total_amt)}")
 
-# --- REMAINING ORIGINAL CODE CONTINUES EXACTLY AS YOUR VERSION ---
-# (No logic changed below)
+
+# RESTRICTION: Disable Bank selection if instruments are active
+                b_col1, b_col2 = st.columns([0.9, 0.1], vertical_alignment="bottom")
+                with b_col1: bank_name = st.text_input("Bank Name", value=st.session_state.selected_bank, disabled=has_active_instruments)
+                with b_col2: 
+                    if st.button("🔍 Select", disabled=has_active_instruments): bank_selection_dialog()
+
+                # --- INSTRUMENT ENTRY ---
+                with st.expander("💳 Add Payment Details", expanded=True):
+                    restricted_mode = None
+                    if st.session_state.temp_instruments:
+                        restricted_mode = st.session_state.temp_instruments[0]['type']
+
+                    with st.form("instrument_form", clear_on_submit=True):
+                        # ALIGNMENT: Proper spacing for Cheque details
+                        f1, f2, f3 = st.columns(3)
+                        with f1: 
+                            if restricted_mode:
+                                st.info(f"Mode: {restricted_mode}")
+                                i_type = restricted_mode
+                            else:
+                                i_type = st.selectbox("Type", ["Cheque", "Demand Draft"])
+                        with f2: i_no = st.text_input("No.", max_chars=6)
+                        with f3: i_date = st.date_input("Date")
+                        
+                        if st.form_submit_button("➕ Add Payment"):
+                            if bank_name and re.match(r"^\d{6}$", i_no):
+                                st.session_state.temp_instruments.append({
+                                    'bank': bank_name, 'type': i_type, 'no': i_no, 'date': i_date.strftime("%d.%m.%Y")
+                                })
+                                st.rerun()
+                            else: st.error("Check Bank/No.")
+
+                    # ALIGNMENT: Uniform font and line spacing for instrument list
+                    for idx, inst in enumerate(st.session_state.temp_instruments):
+                        cols = st.columns([2.5, 2, 2, 2, 0.5])
+                        cols[0].write(f"🏦 {inst['bank']}")
+                        cols[1].write(f"📄 {inst['type']}")
+                        cols[2].write(f"🔢 {inst['no']}")
+                        cols[3].write(f"📅 {inst['date']}")
+                        if cols[4].button("🗑️", key=f"del_tmp_{idx}"): st.session_state.temp_instruments.pop(idx); st.rerun()
+
+                if st.button("🚀 Add to Batch", type="primary"):
+                    if not st.session_state.temp_instruments: st.error("Add at least One Payment Details.")
+                    else:
+                        st.session_state.all_receipts.append({
+                            'id': str(uuid.uuid4()), 'challan': next_no, 'pdate': st.session_state.formatted_pdate,
+                            'name': row['Name'], 'num': row['Consumer Number'], 'month': display_month_text, 
+                            'amount': format_indian_currency(total_amt), 
+                            'words': num2words(total_amt, lang='en_IN').title(),
+                            'pay_type': st.session_state.temp_instruments[0]['type'],
+                            'pay_no': ", ".join([i['no'] for i in st.session_state.temp_instruments]),
+                            'bank': bank_name,
+                            'date': ", ".join(list(set([i['date'] for i in st.session_state.temp_instruments])))
+                        })
+                        st.session_state.temp_instruments = []; st.session_state.selected_bank = ""; st.session_state.is_period = False; st.session_state.consumer_key += 1; st.rerun()
+
+    if st.session_state.all_receipts:
+        st.divider()
+        if st.checkbox("👁️ View Batch Table", value=st.session_state.show_batch):
+            st.session_state.show_batch = True
+            t_head = st.columns([0.7, 2.5, 1.5, 1.2, 1.2, 1.8, 1.1])
+            t_head[0].write("**No.**"); t_head[1].write("**Consumer**"); t_head[2].write("**Amount**"); t_head[3].write("**Mode**"); t_head[4].write("**No.**"); t_head[5].write("**Bank**"); t_head[6].write("**Actions**")
+            for i, rec in enumerate(st.session_state.all_receipts):
+                tcol = st.columns([0.7, 2.5, 1.5, 1.2, 1.2, 1.8, 1.1])
+                tcol[0].write(rec['challan']); tcol[1].write(rec['name']); tcol[2].write(f"₹{rec['amount']}"); tcol[3].write(rec['pay_type']); tcol[4].write(rec['pay_no']); tcol[5].write(rec['bank'])
+                with tcol[6]:
+                    s1, s2 = st.columns(2)
+                    if s1.button("✏️", key=f"e_{rec['id']}"): edit_amount_dialog(i)
+                    if s2.button("🗑️", key=f"d_{rec['id']}"):
+                        st.session_state.all_receipts.pop(i)
+                        for j in range(i, len(st.session_state.all_receipts)): st.session_state.all_receipts[j]['challan'] -= 1
+                        st.rerun()
+        if st.button("🚀 Finalize Word File", type="primary"):
+            doc = DocxTemplate(io.BytesIO(template_bytes))
+            doc.render({'receipts': st.session_state.all_receipts})
+            output = io.BytesIO(); doc.save(output); st.download_button("📥 Download", output.getvalue(), file_name=f"Challans_{date.today()}.docx")
+
+
