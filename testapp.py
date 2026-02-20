@@ -1,3 +1,4 @@
+
 -import streamlit as st
 +import io
 +import os
@@ -729,6 +730,3 @@
 +                output.getvalue(),
 +                file_name=f"Challans_{date.today()}.docx",
 +            )
- 
-EOF
-)
