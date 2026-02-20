@@ -13,35 +13,33 @@ from num2words import num2words
 st.set_page_config(page_title="Challan Master", layout="wide")
 
 # --- CUSTOM CSS ---
-st.markdown(
-    """
-    <style>
-    [data-testid="stVerticalBlock"] > div { gap: 0.5rem !important; }
-    div[data-testid="column"] button { margin-top: 28px !important; }
+CSS_BLOCK = r"""
+<style>
+[data-testid="stVerticalBlock"] > div { gap: 0.5rem !important; }
+div[data-testid="column"] button { margin-top: 28px !important; }
 
-    [data-testid="stImage"] img {
-        width: 65px !important; height: 65px !important;
-        object-fit: contain !important; border-radius: 5px;
-        border: 1px solid #eee; display: block;
-        margin-left: auto; margin-right: auto;
-    }
+[data-testid="stImage"] img {
+    width: 65px !important; height: 65px !important;
+    object-fit: contain !important; border-radius: 5px;
+    border: 1px solid #eee; display: block;
+    margin-left: auto; margin-right: auto;
+}
 
-    .stMarkdown p {
-        font-size: 14px !important;
-        line-height: 1.6 !important;
-        margin-bottom: 0px !important;
-    }
+.stMarkdown p {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    margin-bottom: 0px !important;
+}
 
-    .instrument-row {
-        background-color: #f9f9f9;
-        padding: 5px;
-        border-radius: 5px;
-        margin-bottom: 2px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+.instrument-row {
+    background-color: #f9f9f9;
+    padding: 5px;
+    border-radius: 5px;
+    margin-bottom: 2px;
+}
+</style>
+"""
+st.markdown(CSS_BLOCK, unsafe_allow_html=True)
 
 # --- BANK LOGOS CONFIGURATION ---
 BANKS = [
