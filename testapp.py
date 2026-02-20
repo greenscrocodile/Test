@@ -26,7 +26,7 @@
 +st.markdown(
 +    """
      <style>
-     [data-testid="stVerticalBlock"] > div { gap: 0.5rem !important; }
+     [data-testid="stVerticalBlock"] > div { gap: 1rem !important; }
      div[data-testid="column"] button { margin-top: 28px !important; }
 -    .stMarkdown p { font-size: 14px !important; line-height: 1.6 !important; margin-bottom: 0px !important; }
 +
