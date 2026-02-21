@@ -409,6 +409,8 @@ if st.session_state.locked:
         purpose_value = selected_other_purpose
         description_value = ""
         desc_value_4d = ""
+        is_new_consumer = False
+        new_consumer_name = ""
 
         if selected_other_purpose == "Advance Payment":
             c1, c2 = st.columns(2)
@@ -443,7 +445,7 @@ if st.session_state.locked:
                 )
             if desc_value_4d and not re.match(r"^\d{1,4}$", desc_value_4d):
                 st.error("Value must be numeric and maximum 4 digits.")
-            description_value = f"{base_desc} {desc_value_4d}".strip()
+            description_value = f"{base_desc} {desc_value_4d} KVA".strip()
             purpose_value = description_value
         else:
             desc_value_4d = st.text_input(
@@ -457,23 +459,38 @@ if st.session_state.locked:
                 "registration cum-processing fees for the extension of HT power supply of CMD of"
             )
             if desc_value_4d:
-                description_value = f"{description_value} {desc_value_4d}"
+                description_value = f"{description_value} {desc_value_4d} KVA"
             purpose_value = description_value
 
         if selected_other_purpose == "Processing Fee":
             total_amt = 20000
             st.info("Processing Fee amount is fixed at ₹20,000")
         else:
-            total_amt = st.number_input(
-                "Amount",
-                min_value=1,
-                step=1,
-                value=1,
+            other_amount = st.text_input("Amount", value="", disabled=has_active_instruments)
+            if other_amount and re.match(r"^\d+$", other_amount):
+                total_amt = int(other_amount)
+            elif other_amount:
+                total_amt = None
+                st.error("Amount must be a valid whole number.")
+            else:
+                total_amt = None
+
+        if selected_other_purpose in [
+            "Security Deposit and Meter Security Deposit (SD and MSD)",
+            "Processing Fee",
+        ]:
+            is_new_consumer = st.checkbox(
+                "New Consumer",
+                value=True,
                 disabled=has_active_instruments,
             )
 
-        is_new_consumer = selected_other_purpose == "Security Deposit and Meter Security Deposit (SD and MSD)"
         if is_new_consumer:
+            new_consumer_name = st.text_input(
+                "Consumer Name",
+                placeholder="Enter new consumer name",
+                disabled=has_active_instruments,
+            )
             search_num = st.text_input(
                 "Enter Consumer Number",
                 value="NEW",
@@ -489,7 +506,7 @@ if st.session_state.locked:
             )
 
         if is_new_consumer:
-            row = {"Name": "NEW CONSUMER", "Consumer Number": "NEW"}
+            row = {"Name": new_consumer_name.strip() if new_consumer_name.strip() else "NEW CONSUMER", "Consumer Number": "NEW"}
         elif search_num and not re.match(r"^\d*$", search_num):
             st.error("Consumer Number must contain numbers only.")
         elif search_num and len(search_num) == 3 and re.match(r"^\d{3}$", search_num):
@@ -567,6 +584,10 @@ if st.session_state.locked:
                 "Processing Fee",
             ] and not re.match(r"^\d{1,4}$", desc_value_4d):
                 st.error("Please enter a valid 1 to 4 digit value.")
+            elif st.session_state.challan_type == "OTHER" and is_new_consumer and not new_consumer_name.strip():
+                st.error("Please enter Consumer Name for New Consumer.")
+            elif st.session_state.challan_type == "OTHER" and selected_other_purpose != "Processing Fee" and total_amt is None:
+                st.error("Please enter a valid Amount.")
             else:
                 receipt = {
                     "id": str(uuid.uuid4()),
