@@ -458,7 +458,6 @@ if st.session_state.locked:
             description_value = st.text_input(
                 "Description",
                 placeholder="Enter ASD description",
-                disabled=has_active_instruments,
                 key=f"asd_desc_{st.session_state.other_form_key}",
             )
             purpose_value = description_value
@@ -478,15 +477,14 @@ if st.session_state.locked:
             ]
             c1, c2 = st.columns([0.75, 0.25])
             with c1:
-                sd_desc_choice = st.selectbox("Description", sd_desc_options, disabled=has_active_instruments, key=f"sd_desc_choice_{st.session_state.other_form_key}")
+                sd_desc_choice = st.selectbox("Description", sd_desc_options, key=f"sd_desc_choice_{st.session_state.other_form_key}")
             with c2:
-                desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, disabled=has_active_instruments, key=f"sd_value_{st.session_state.other_form_key}")
+                desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, key=f"sd_value_{st.session_state.other_form_key}")
 
             if sd_desc_choice == "Custom...":
                 base_desc = st.text_input(
                     "Custom Description",
                     placeholder="Enter SD and MSD description",
-                    disabled=has_active_instruments,
                     key=f"sd_custom_desc_{st.session_state.other_form_key}",
                 )
                 description_value = base_desc.strip()
@@ -500,9 +498,9 @@ if st.session_state.locked:
 
             s1, s2 = st.columns(2)
             with s1:
-                sd_amount_str = st.text_input("SD Amount", value="", disabled=has_active_instruments, key=f"sd_amt_{st.session_state.other_form_key}")
+                sd_amount_str = st.text_input("SD Amount", value="", key=f"sd_amt_{st.session_state.other_form_key}")
             with s2:
-                msd_amount_str = st.text_input("MSD Amount", value="", disabled=has_active_instruments, key=f"msd_amt_{st.session_state.other_form_key}")
+                msd_amount_str = st.text_input("MSD Amount", value="", key=f"msd_amt_{st.session_state.other_form_key}")
 
             if sd_amount_str and msd_amount_str and re.match(r"^\d+$", sd_amount_str) and re.match(r"^\d+$", msd_amount_str):
                 sd_amount = int(sd_amount_str)
@@ -524,15 +522,14 @@ if st.session_state.locked:
             ]
             c1, c2 = st.columns([0.75, 0.25])
             with c1:
-                proc_desc_choice = st.selectbox("Description", proc_desc_options, disabled=has_active_instruments, key=f"proc_desc_choice_{st.session_state.other_form_key}")
+                proc_desc_choice = st.selectbox("Description", proc_desc_options, key=f"proc_desc_choice_{st.session_state.other_form_key}")
             with c2:
-                desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, disabled=has_active_instruments, key=f"proc_value_{st.session_state.other_form_key}")
+                desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, key=f"proc_value_{st.session_state.other_form_key}")
 
             if proc_desc_choice == "Custom...":
                 description_value = st.text_input(
                     "Custom Description",
                     placeholder="Enter processing fee description",
-                    disabled=has_active_instruments,
                     key=f"proc_custom_desc_{st.session_state.other_form_key}",
                 ).strip()
             else:
@@ -719,6 +716,9 @@ if st.session_state.locked:
                         st.session_state.all_receipts.pop(i)
                         for j in range(i, len(st.session_state.all_receipts)):
                             st.session_state.all_receipts[j]["challan"] -= 1
+                        if not st.session_state.all_receipts:
+                            st.session_state.batch_purpose = ""
+                            st.session_state.other_form_key += 1
                         st.rerun()
 
         if st.button("🚀 Finalize Word File", type="primary"):
