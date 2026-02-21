@@ -79,9 +79,8 @@ BANKS = [
     {"name": "Federal Bank", "file": "logos/Federal Bank.jpg"},
 ]
 
-CC_TEMPLATE = "Test.docx"
-OTHER_ADVANCE_TEMPLATE = "Other_Advance_Payment.docx"
-OTHER_SECONDARY_TEMPLATE = "Other_ASD_SDMSD_Processing.docx"
+CC_ADVANCE_TEMPLATE = "CCTemplate.docx"
+SD_TEMPLATE = "SDTemplate.docx"
 
 OTHER_PURPOSES = [
     "Advance Payment",
@@ -219,29 +218,27 @@ with st.sidebar:
     st.divider()
 
     template_bytes = None
-    secondary_template_bytes = None
 
     if challan_type == "C. C":
-        if os.path.exists(CC_TEMPLATE):
-            st.success("✅ C. C Template Loaded")
-            with open(CC_TEMPLATE, "rb") as f:
+        if os.path.exists(CC_ADVANCE_TEMPLATE):
+            st.success("✅ C.C Template Loaded")
+            with open(CC_ADVANCE_TEMPLATE, "rb") as f:
                 template_bytes = f.read()
         else:
-            st.error(f"❌ {CC_TEMPLATE} Missing!")
+            st.error(f"❌ {CC_ADVANCE_TEMPLATE} Missing!")
     else:
-        if os.path.exists(OTHER_ADVANCE_TEMPLATE):
-            st.success("✅ OTHER Advance Template Loaded")
-            with open(OTHER_ADVANCE_TEMPLATE, "rb") as f:
-                template_bytes = f.read()
-        else:
-            st.error(f"❌ {OTHER_ADVANCE_TEMPLATE} Missing!")
+        cc_ok = os.path.exists(CC_ADVANCE_TEMPLATE)
+        sd_ok = os.path.exists(SD_TEMPLATE)
 
-        if os.path.exists(OTHER_SECONDARY_TEMPLATE):
-            st.success("✅ OTHER ASD/SDMSD/Processing Template Loaded")
-            with open(OTHER_SECONDARY_TEMPLATE, "rb") as f:
-                secondary_template_bytes = f.read()
+        if cc_ok:
+            st.success("✅ CCTemplate Loaded (for Advance Payment)")
         else:
-            st.error(f"❌ {OTHER_SECONDARY_TEMPLATE} Missing!")
+            st.error(f"❌ {CC_ADVANCE_TEMPLATE} Missing!")
+
+        if sd_ok:
+            st.success("✅ SDTemplate Loaded (for ASD / SD & MSD / Processing Fee)")
+        else:
+            st.error(f"❌ {SD_TEMPLATE} Missing!")
 
     data_file = st.file_uploader("Upload Master Data (.xlsx)", type=["xlsx"])
 
@@ -250,9 +247,9 @@ with st.sidebar:
             if not s_challan or not s_challan.isdigit():
                 st.error("Enter a valid Numeric Challan Number.")
             elif challan_type == "C. C" and not template_bytes:
-                st.error("C. C template not loaded.")
-            elif challan_type == "OTHER" and (not template_bytes or not secondary_template_bytes):
-                st.error("Load both OTHER templates.")
+                st.error("C.C template not loaded.")
+            elif challan_type == "OTHER" and (not os.path.exists(CC_ADVANCE_TEMPLATE) or not os.path.exists(SD_TEMPLATE)):
+                st.error("Load both CCTemplate.docx and SDTemplate.docx.")
             elif not data_file:
                 st.error("Upload Master Data.")
             else:
@@ -400,16 +397,20 @@ if st.session_state.locked:
                 elif total_amt <= 0:
                     st.warning("Amount is zero for selected Month-Year.")
                 else:
-                    purpose_value = "C. C"
+                    purpose_value = "C. C. Charges"
                     description_value = display_month_text
                     st.success(
                         f"**Found:** {row['Name']} | **Total Amt:** ₹{format_indian_currency(total_amt)}"
                     )
 
     else:
-        purpose_value = st.selectbox("Purpose", OTHER_PURPOSES, disabled=has_active_instruments)
+        selected_other_purpose = st.selectbox("Purpose", OTHER_PURPOSES, disabled=has_active_instruments)
+        template_group = "CC" if selected_other_purpose == "Advance Payment" else "SD"
+        purpose_value = selected_other_purpose
+        description_value = ""
+        desc_value_4d = ""
 
-        if purpose_value == "Advance Payment":
+        if selected_other_purpose == "Advance Payment":
             c1, c2 = st.columns(2)
             with c1:
                 adv_month = st.selectbox("Month", MONTH_LIST, disabled=has_active_instruments)
@@ -417,20 +418,49 @@ if st.session_state.locked:
                 adv_year = st.selectbox(
                     "Year", YEAR_OPTIONS, index=0, disabled=has_active_instruments
                 )
+            purpose_value = "Advance Payment"
             description_value = f"{adv_month} - {adv_year}"
-        elif purpose_value in [
-            "Advance Security Deposit (ASD)",
-            "Security Deposit and Meter Security Deposit (SD and MSD)",
-        ]:
+        elif selected_other_purpose == "Advance Security Deposit (ASD)":
             description_value = st.text_input(
                 "Description",
-                placeholder="Enter purpose description",
+                placeholder="Enter ASD description",
                 disabled=has_active_instruments,
             )
+            purpose_value = description_value
+        elif selected_other_purpose == "Security Deposit and Meter Security Deposit (SD and MSD)":
+            c1, c2 = st.columns([0.75, 0.25])
+            with c1:
+                base_desc = st.text_input(
+                    "Description",
+                    placeholder="Enter SD and MSD description",
+                    disabled=has_active_instruments,
+                )
+            with c2:
+                desc_value_4d = st.text_input(
+                    "Value (max 4 digits)",
+                    max_chars=4,
+                    disabled=has_active_instruments,
+                )
+            if desc_value_4d and not re.match(r"^\d{1,4}$", desc_value_4d):
+                st.error("Value must be numeric and maximum 4 digits.")
+            description_value = f"{base_desc} {desc_value_4d}".strip()
+            purpose_value = description_value
         else:
-            description_value = ""
+            desc_value_4d = st.text_input(
+                "Value (max 4 digits)",
+                max_chars=4,
+                disabled=has_active_instruments,
+            )
+            if desc_value_4d and not re.match(r"^\d{1,4}$", desc_value_4d):
+                st.error("Value must be numeric and maximum 4 digits.")
+            description_value = (
+                "registration cum-processing fees for the extension of HT power supply of CMD of"
+            )
+            if desc_value_4d:
+                description_value = f"{description_value} {desc_value_4d}"
+            purpose_value = description_value
 
-        if purpose_value == "Processing Fee":
+        if selected_other_purpose == "Processing Fee":
             total_amt = 20000
             st.info("Processing Fee amount is fixed at ₹20,000")
         else:
@@ -442,7 +472,7 @@ if st.session_state.locked:
                 disabled=has_active_instruments,
             )
 
-        is_new_consumer = purpose_value == "Security Deposit and Meter Security Deposit (SD and MSD)"
+        is_new_consumer = selected_other_purpose == "Security Deposit and Meter Security Deposit (SD and MSD)"
         if is_new_consumer:
             search_num = st.text_input(
                 "Enter Consumer Number",
@@ -530,11 +560,13 @@ if st.session_state.locked:
                 st.error("Add at least One Payment Details.")
             elif not bank_name:
                 st.error("Bank Name is required.")
-            elif st.session_state.challan_type == "OTHER" and purpose_value in [
-                "Advance Security Deposit (ASD)",
-                "Security Deposit and Meter Security Deposit (SD and MSD)",
-            ] and not description_value.strip():
+            elif st.session_state.challan_type == "OTHER" and not description_value.strip() and selected_other_purpose != "Advance Payment":
                 st.error("Description is required for selected purpose.")
+            elif st.session_state.challan_type == "OTHER" and selected_other_purpose in [
+                "Security Deposit and Meter Security Deposit (SD and MSD)",
+                "Processing Fee",
+            ] and not re.match(r"^\d{1,4}$", desc_value_4d):
+                st.error("Please enter a valid 1 to 4 digit value.")
             else:
                 receipt = {
                     "id": str(uuid.uuid4()),
@@ -543,6 +575,7 @@ if st.session_state.locked:
                     "name": row["Name"],
                     "num": row["Consumer Number"],
                     "purpose": purpose_value,
+                    "selected_purpose": selected_other_purpose if st.session_state.challan_type == "OTHER" else "C. C",
                     "description": description_value,
                     "amount": format_indian_currency(total_amt),
                     "words": amount_words(total_amt),
@@ -594,15 +627,11 @@ if st.session_state.locked:
 
         if st.button("🚀 Finalize Word File", type="primary"):
             if st.session_state.challan_type == "C. C":
-                with open(CC_TEMPLATE, "rb") as f:
+                with open(CC_ADVANCE_TEMPLATE, "rb") as f:
                     doc = DocxTemplate(io.BytesIO(f.read()))
             else:
-                first_receipt_purpose = st.session_state.all_receipts[0].get("purpose", "")
-                tpl = (
-                    OTHER_ADVANCE_TEMPLATE
-                    if first_receipt_purpose == "Advance Payment"
-                    else OTHER_SECONDARY_TEMPLATE
-                )
+                first_selected_purpose = st.session_state.all_receipts[0].get("selected_purpose", "")
+                tpl = CC_ADVANCE_TEMPLATE if first_selected_purpose == "Advance Payment" else SD_TEMPLATE
                 if not os.path.exists(tpl):
                     st.error(f"Template missing: {tpl}")
                     st.stop()
