@@ -546,13 +546,12 @@ if st.session_state.locked:
             "Security Deposit and Meter Security Deposit (SD and MSD)",
             "Processing Fee",
         ]:
-            is_new_consumer = st.checkbox("New Consumer", value=True, disabled=has_active_instruments, key=f"new_consumer_{st.session_state.other_form_key}")
+            is_new_consumer = st.checkbox("New Consumer", value=True, key=f"new_consumer_{st.session_state.other_form_key}")
 
         if is_new_consumer:
             new_consumer_name = st.text_input(
                 "Consumer Name",
                 placeholder="Enter new consumer name",
-                disabled=has_active_instruments,
                 key=f"new_consumer_name_{st.session_state.other_form_key}",
             )
             st.text_input(
@@ -570,7 +569,6 @@ if st.session_state.locked:
                 "Enter Consumer Number",
                 max_chars=3,
                 key=f"consumer_{st.session_state.consumer_key}",
-                disabled=has_active_instruments,
             )
             if search_num and not re.match(r"^\d*$", search_num):
                 st.error("Consumer Number must contain numbers only.")
@@ -582,7 +580,10 @@ if st.session_state.locked:
                     row = result.iloc[0]
 
         if row is not None:
-            st.success(f"**Found:** {row['Name']} | **Purpose:** {purpose_value}")
+            if is_new_consumer:
+                st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
+            else:
+                st.success(f"**Found:** {row['Name']} | **Purpose:** {purpose_value}")
 
     if row is not None and total_amt is not None:
         b_col1, b_col2 = st.columns([0.9, 0.1], vertical_alignment="bottom")
