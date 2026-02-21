@@ -136,6 +136,23 @@ def amount_words(number):
     )
 
 
+def format_period_month_text(target_months):
+    year_to_months = {}
+    for month_name, year in target_months:
+        year_to_months.setdefault(year, []).append(month_name)
+
+    parts = []
+    for year, months in year_to_months.items():
+        parts.append(f"{', '.join(months)} - {year}")
+
+    return " and ".join(parts)
+
+
+class SafeReceipt(dict):
+    def __getattr__(self, key):
+        return self.get(key, "")
+
+
 @st.dialog("Select Bank", width="medium")
 def bank_selection_dialog():
     st.write("### 🏦 Select Bank")
@@ -332,7 +349,7 @@ if st.session_state.locked:
                         if curr.month == 12
                         else datetime(curr.year, curr.month + 1, 1)
                     )
-                display_month_text = f"{f_month} {f_year} to {t_month} {t_year}"
+                display_month_text = format_period_month_text(target_months)
             else:
                 st.error("'From' date must be before 'To' date.")
 
@@ -536,6 +553,8 @@ if st.session_state.locked:
                 }
                 if st.session_state.challan_type == "C. C":
                     receipt["month"] = display_month_text
+                else:
+                    receipt["month"] = description_value
                 st.session_state.all_receipts.append(receipt)
                 st.session_state.temp_instruments = []
                 st.session_state.selected_bank = ""
@@ -590,7 +609,8 @@ if st.session_state.locked:
                 with open(tpl, "rb") as f:
                     doc = DocxTemplate(io.BytesIO(f.read()))
 
-            doc.render({"receipts": st.session_state.all_receipts})
+            safe_receipts = [SafeReceipt(r) for r in st.session_state.all_receipts]
+            doc.render({"receipts": safe_receipts})
             output = io.BytesIO()
             doc.save(output)
             output.seek(0)
