@@ -405,10 +405,11 @@ if st.session_state.locked:
 
     else:
         selected_other_purpose = st.selectbox("Purpose", OTHER_PURPOSES, disabled=has_active_instruments)
-        template_group = "CC" if selected_other_purpose == "Advance Payment" else "SD"
         purpose_value = selected_other_purpose
         description_value = ""
         desc_value_4d = ""
+        breakdown_value = ""
+        require_kva_value = False
         is_new_consumer = False
         new_consumer_name = ""
 
@@ -422,50 +423,6 @@ if st.session_state.locked:
                 )
             purpose_value = "Advance Payment"
             description_value = f"{adv_month} - {adv_year}"
-        elif selected_other_purpose == "Advance Security Deposit (ASD)":
-            description_value = st.text_input(
-                "Description",
-                placeholder="Enter ASD description",
-                disabled=has_active_instruments,
-            )
-            purpose_value = description_value
-        elif selected_other_purpose == "Security Deposit and Meter Security Deposit (SD and MSD)":
-            c1, c2 = st.columns([0.75, 0.25])
-            with c1:
-                base_desc = st.text_input(
-                    "Description",
-                    placeholder="Enter SD and MSD description",
-                    disabled=has_active_instruments,
-                )
-            with c2:
-                desc_value_4d = st.text_input(
-                    "Value (max 4 digits)",
-                    max_chars=4,
-                    disabled=has_active_instruments,
-                )
-            if desc_value_4d and not re.match(r"^\d{1,4}$", desc_value_4d):
-                st.error("Value must be numeric and maximum 4 digits.")
-            description_value = f"{base_desc} {desc_value_4d} KVA".strip()
-            purpose_value = description_value
-        else:
-            desc_value_4d = st.text_input(
-                "Value (max 4 digits)",
-                max_chars=4,
-                disabled=has_active_instruments,
-            )
-            if desc_value_4d and not re.match(r"^\d{1,4}$", desc_value_4d):
-                st.error("Value must be numeric and maximum 4 digits.")
-            description_value = (
-                "registration cum-processing fees for the extension of HT power supply of CMD of"
-            )
-            if desc_value_4d:
-                description_value = f"{description_value} {desc_value_4d} KVA"
-            purpose_value = description_value
-
-        if selected_other_purpose == "Processing Fee":
-            total_amt = 20000
-            st.info("Processing Fee amount is fixed at ₹20,000")
-        else:
             other_amount = st.text_input("Amount", value="", disabled=has_active_instruments)
             if other_amount and re.match(r"^\d+$", other_amount):
                 total_amt = int(other_amount)
@@ -475,15 +432,99 @@ if st.session_state.locked:
             else:
                 total_amt = None
 
+        elif selected_other_purpose == "Advance Security Deposit (ASD)":
+            description_value = st.text_input(
+                "Description",
+                placeholder="Enter ASD description",
+                disabled=has_active_instruments,
+            )
+            purpose_value = description_value
+            other_amount = st.text_input("Amount", value="", disabled=has_active_instruments)
+            if other_amount and re.match(r"^\d+$", other_amount):
+                total_amt = int(other_amount)
+            elif other_amount:
+                total_amt = None
+                st.error("Amount must be a valid whole number.")
+            else:
+                total_amt = None
+
+        elif selected_other_purpose == "Security Deposit and Meter Security Deposit (SD and MSD)":
+            sd_desc_options = [
+                "SD and MSD - Extension of HT power supply service for CMD of",
+                "Custom...",
+            ]
+            c1, c2 = st.columns([0.75, 0.25])
+            with c1:
+                sd_desc_choice = st.selectbox("Description", sd_desc_options, disabled=has_active_instruments)
+            with c2:
+                desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, disabled=has_active_instruments)
+
+            if sd_desc_choice == "Custom...":
+                base_desc = st.text_input(
+                    "Custom Description",
+                    placeholder="Enter SD and MSD description",
+                    disabled=has_active_instruments,
+                )
+                description_value = base_desc.strip()
+            else:
+                require_kva_value = True
+                if desc_value_4d and not re.match(r"^\d{1,4}$", desc_value_4d):
+                    st.error("Value must be numeric and maximum 4 digits.")
+                description_value = f"{sd_desc_choice} {desc_value_4d} KVA".strip()
+
+            purpose_value = description_value
+
+            s1, s2 = st.columns(2)
+            with s1:
+                sd_amount_str = st.text_input("SD Amount", value="", disabled=has_active_instruments)
+            with s2:
+                msd_amount_str = st.text_input("MSD Amount", value="", disabled=has_active_instruments)
+
+            if sd_amount_str and msd_amount_str and re.match(r"^\d+$", sd_amount_str) and re.match(r"^\d+$", msd_amount_str):
+                sd_amount = int(sd_amount_str)
+                msd_amount = int(msd_amount_str)
+                total_amt = sd_amount + msd_amount
+                breakdown_value = (
+                    f"[S.D     : {format_indian_currency(sd_amount)}]\n"
+                    f"[M.S.D : {format_indian_currency(msd_amount)}]"
+                )
+            else:
+                total_amt = None
+                if sd_amount_str or msd_amount_str:
+                    st.error("Enter valid whole numbers for SD Amount and MSD Amount.")
+
+        else:
+            proc_desc_options = [
+                "registration cum-processing fees for the extension of HT power supply of CMD of",
+                "Custom...",
+            ]
+            c1, c2 = st.columns([0.75, 0.25])
+            with c1:
+                proc_desc_choice = st.selectbox("Description", proc_desc_options, disabled=has_active_instruments)
+            with c2:
+                desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, disabled=has_active_instruments)
+
+            if proc_desc_choice == "Custom...":
+                description_value = st.text_input(
+                    "Custom Description",
+                    placeholder="Enter processing fee description",
+                    disabled=has_active_instruments,
+                ).strip()
+            else:
+                require_kva_value = True
+                if desc_value_4d and not re.match(r"^\d{1,4}$", desc_value_4d):
+                    st.error("Value must be numeric and maximum 4 digits.")
+                description_value = f"{proc_desc_choice} {desc_value_4d} KVA".strip()
+
+            purpose_value = description_value
+            total_amt = 20000
+            st.info("Processing Fee amount is fixed at ₹20,000")
+
         if selected_other_purpose in [
             "Security Deposit and Meter Security Deposit (SD and MSD)",
             "Processing Fee",
         ]:
-            is_new_consumer = st.checkbox(
-                "New Consumer",
-                value=True,
-                disabled=has_active_instruments,
-            )
+            is_new_consumer = st.checkbox("New Consumer", value=True, disabled=has_active_instruments)
 
         if is_new_consumer:
             new_consumer_name = st.text_input(
@@ -491,12 +532,16 @@ if st.session_state.locked:
                 placeholder="Enter new consumer name",
                 disabled=has_active_instruments,
             )
-            search_num = st.text_input(
+            st.text_input(
                 "Enter Consumer Number",
                 value="NEW",
                 disabled=True,
                 key=f"consumer_new_{st.session_state.consumer_key}",
             )
+            row = {
+                "Name": new_consumer_name.strip() if new_consumer_name.strip() else "NEW CONSUMER",
+                "Consumer Number": "NEW",
+            }
         else:
             search_num = st.text_input(
                 "Enter Consumer Number",
@@ -504,17 +549,14 @@ if st.session_state.locked:
                 key=f"consumer_{st.session_state.consumer_key}",
                 disabled=has_active_instruments,
             )
-
-        if is_new_consumer:
-            row = {"Name": new_consumer_name.strip() if new_consumer_name.strip() else "NEW CONSUMER", "Consumer Number": "NEW"}
-        elif search_num and not re.match(r"^\d*$", search_num):
-            st.error("Consumer Number must contain numbers only.")
-        elif search_num and len(search_num) == 3 and re.match(r"^\d{3}$", search_num):
-            result = df[df["Consumer Number"].astype(str).str.zfill(3) == search_num]
-            if result.empty:
-                st.error("Consumer not found in Master Data.")
-            else:
-                row = result.iloc[0]
+            if search_num and not re.match(r"^\d*$", search_num):
+                st.error("Consumer Number must contain numbers only.")
+            elif search_num and len(search_num) == 3 and re.match(r"^\d{3}$", search_num):
+                result = df[df["Consumer Number"].astype(str).str.zfill(3) == search_num]
+                if result.empty:
+                    st.error("Consumer not found in Master Data.")
+                else:
+                    row = result.iloc[0]
 
         if row is not None:
             st.success(f"**Found:** {row['Name']} | **Purpose:** {purpose_value}")
@@ -579,15 +621,17 @@ if st.session_state.locked:
                 st.error("Bank Name is required.")
             elif st.session_state.challan_type == "OTHER" and not description_value.strip() and selected_other_purpose != "Advance Payment":
                 st.error("Description is required for selected purpose.")
-            elif st.session_state.challan_type == "OTHER" and selected_other_purpose in [
-                "Security Deposit and Meter Security Deposit (SD and MSD)",
-                "Processing Fee",
-            ] and not re.match(r"^\d{1,4}$", desc_value_4d):
+            elif st.session_state.challan_type == "OTHER" and require_kva_value and not re.match(r"^\d{1,4}$", desc_value_4d):
                 st.error("Please enter a valid 1 to 4 digit value.")
             elif st.session_state.challan_type == "OTHER" and is_new_consumer and not new_consumer_name.strip():
                 st.error("Please enter Consumer Name for New Consumer.")
-            elif st.session_state.challan_type == "OTHER" and selected_other_purpose != "Processing Fee" and total_amt is None:
+            elif st.session_state.challan_type == "OTHER" and selected_other_purpose not in [
+                "Processing Fee",
+                "Security Deposit and Meter Security Deposit (SD and MSD)",
+            ] and total_amt is None:
                 st.error("Please enter a valid Amount.")
+            elif st.session_state.challan_type == "OTHER" and selected_other_purpose == "Security Deposit and Meter Security Deposit (SD and MSD)" and total_amt is None:
+                st.error("Please enter valid SD Amount and MSD Amount.")
             else:
                 receipt = {
                     "id": str(uuid.uuid4()),
@@ -598,6 +642,7 @@ if st.session_state.locked:
                     "purpose": purpose_value,
                     "selected_purpose": selected_other_purpose if st.session_state.challan_type == "OTHER" else "C. C",
                     "description": description_value,
+                    "breakdown": breakdown_value,
                     "amount": format_indian_currency(total_amt),
                     "words": amount_words(total_amt),
                     "pay_type": st.session_state.temp_instruments[0]["type"],
