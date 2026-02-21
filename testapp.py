@@ -199,6 +199,10 @@ if "temp_instruments" not in st.session_state:
     st.session_state.temp_instruments = []
 if "challan_type" not in st.session_state:
     st.session_state.challan_type = "C. C"
+if "other_form_key" not in st.session_state:
+    st.session_state.other_form_key = 0
+if "batch_purpose" not in st.session_state:
+    st.session_state.batch_purpose = ""
 
 with st.sidebar:
     st.header("⚙️ Configuration")
@@ -264,6 +268,8 @@ with st.sidebar:
             st.session_state.all_receipts = []
             st.session_state.temp_instruments = []
             st.session_state.selected_bank = ""
+            st.session_state.other_form_key = 0
+            st.session_state.batch_purpose = ""
             st.rerun()
 
 if st.session_state.locked:
@@ -295,6 +301,7 @@ if st.session_state.locked:
     display_month_text = ""
     purpose_value = ""
     description_value = ""
+    breakdown_value = ""
 
     if st.session_state.challan_type == "C. C":
         col_t1, _ = st.columns([0.2, 0.8])
@@ -404,7 +411,22 @@ if st.session_state.locked:
                     )
 
     else:
-        selected_other_purpose = st.selectbox("Purpose", OTHER_PURPOSES, disabled=has_active_instruments)
+        purpose_locked = bool(st.session_state.batch_purpose)
+        if purpose_locked:
+            selected_other_purpose = st.selectbox(
+                "Purpose",
+                [st.session_state.batch_purpose],
+                index=0,
+                disabled=True,
+                key=f"other_purpose_locked_{st.session_state.other_form_key}",
+            )
+        else:
+            selected_other_purpose = st.selectbox(
+                "Purpose",
+                OTHER_PURPOSES,
+                disabled=has_active_instruments,
+                key=f"other_purpose_{st.session_state.other_form_key}",
+            )
         purpose_value = selected_other_purpose
         description_value = ""
         desc_value_4d = ""
@@ -416,14 +438,14 @@ if st.session_state.locked:
         if selected_other_purpose == "Advance Payment":
             c1, c2 = st.columns(2)
             with c1:
-                adv_month = st.selectbox("Month", MONTH_LIST, disabled=has_active_instruments)
+                adv_month = st.selectbox("Month", MONTH_LIST, disabled=has_active_instruments, key=f"adv_month_{st.session_state.other_form_key}")
             with c2:
                 adv_year = st.selectbox(
-                    "Year", YEAR_OPTIONS, index=0, disabled=has_active_instruments
+                    "Year", YEAR_OPTIONS, index=0, disabled=has_active_instruments, key=f"adv_year_{st.session_state.other_form_key}"
                 )
             purpose_value = "Advance Payment"
             description_value = f"{adv_month} - {adv_year}"
-            other_amount = st.text_input("Amount", value="", disabled=has_active_instruments)
+            other_amount = st.text_input("Amount", value="", disabled=has_active_instruments, key=f"adv_amt_{st.session_state.other_form_key}")
             if other_amount and re.match(r"^\d+$", other_amount):
                 total_amt = int(other_amount)
             elif other_amount:
@@ -437,9 +459,10 @@ if st.session_state.locked:
                 "Description",
                 placeholder="Enter ASD description",
                 disabled=has_active_instruments,
+                key=f"asd_desc_{st.session_state.other_form_key}",
             )
             purpose_value = description_value
-            other_amount = st.text_input("Amount", value="", disabled=has_active_instruments)
+            other_amount = st.text_input("Amount", value="", disabled=has_active_instruments, key=f"asd_amt_{st.session_state.other_form_key}")
             if other_amount and re.match(r"^\d+$", other_amount):
                 total_amt = int(other_amount)
             elif other_amount:
@@ -455,15 +478,16 @@ if st.session_state.locked:
             ]
             c1, c2 = st.columns([0.75, 0.25])
             with c1:
-                sd_desc_choice = st.selectbox("Description", sd_desc_options, disabled=has_active_instruments)
+                sd_desc_choice = st.selectbox("Description", sd_desc_options, disabled=has_active_instruments, key=f"sd_desc_choice_{st.session_state.other_form_key}")
             with c2:
-                desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, disabled=has_active_instruments)
+                desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, disabled=has_active_instruments, key=f"sd_value_{st.session_state.other_form_key}")
 
             if sd_desc_choice == "Custom...":
                 base_desc = st.text_input(
                     "Custom Description",
                     placeholder="Enter SD and MSD description",
                     disabled=has_active_instruments,
+                    key=f"sd_custom_desc_{st.session_state.other_form_key}",
                 )
                 description_value = base_desc.strip()
             else:
@@ -476,9 +500,9 @@ if st.session_state.locked:
 
             s1, s2 = st.columns(2)
             with s1:
-                sd_amount_str = st.text_input("SD Amount", value="", disabled=has_active_instruments)
+                sd_amount_str = st.text_input("SD Amount", value="", disabled=has_active_instruments, key=f"sd_amt_{st.session_state.other_form_key}")
             with s2:
-                msd_amount_str = st.text_input("MSD Amount", value="", disabled=has_active_instruments)
+                msd_amount_str = st.text_input("MSD Amount", value="", disabled=has_active_instruments, key=f"msd_amt_{st.session_state.other_form_key}")
 
             if sd_amount_str and msd_amount_str and re.match(r"^\d+$", sd_amount_str) and re.match(r"^\d+$", msd_amount_str):
                 sd_amount = int(sd_amount_str)
@@ -500,15 +524,16 @@ if st.session_state.locked:
             ]
             c1, c2 = st.columns([0.75, 0.25])
             with c1:
-                proc_desc_choice = st.selectbox("Description", proc_desc_options, disabled=has_active_instruments)
+                proc_desc_choice = st.selectbox("Description", proc_desc_options, disabled=has_active_instruments, key=f"proc_desc_choice_{st.session_state.other_form_key}")
             with c2:
-                desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, disabled=has_active_instruments)
+                desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, disabled=has_active_instruments, key=f"proc_value_{st.session_state.other_form_key}")
 
             if proc_desc_choice == "Custom...":
                 description_value = st.text_input(
                     "Custom Description",
                     placeholder="Enter processing fee description",
                     disabled=has_active_instruments,
+                    key=f"proc_custom_desc_{st.session_state.other_form_key}",
                 ).strip()
             else:
                 require_kva_value = True
@@ -524,13 +549,14 @@ if st.session_state.locked:
             "Security Deposit and Meter Security Deposit (SD and MSD)",
             "Processing Fee",
         ]:
-            is_new_consumer = st.checkbox("New Consumer", value=True, disabled=has_active_instruments)
+            is_new_consumer = st.checkbox("New Consumer", value=True, disabled=has_active_instruments, key=f"new_consumer_{st.session_state.other_form_key}")
 
         if is_new_consumer:
             new_consumer_name = st.text_input(
                 "Consumer Name",
                 placeholder="Enter new consumer name",
                 disabled=has_active_instruments,
+                key=f"new_consumer_name_{st.session_state.other_form_key}",
             )
             st.text_input(
                 "Enter Consumer Number",
@@ -658,6 +684,10 @@ if st.session_state.locked:
                 st.session_state.temp_instruments = []
                 st.session_state.selected_bank = ""
                 st.session_state.is_period = False
+                if st.session_state.challan_type == "OTHER" and not st.session_state.batch_purpose:
+                    st.session_state.batch_purpose = selected_other_purpose
+                if st.session_state.challan_type == "OTHER":
+                    st.session_state.other_form_key += 1
                 st.session_state.consumer_key += 1
                 st.rerun()
 
