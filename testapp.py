@@ -434,6 +434,8 @@ if st.session_state.locked:
         require_kva_value = False
         is_new_consumer = False
         new_consumer_name = ""
+        tag_value = ""
+        account_value = ""
 
         if selected_other_purpose == "Advance Payment":
             c1, c2 = st.columns(2)
@@ -455,9 +457,15 @@ if st.session_state.locked:
                 total_amt = None
 
         elif selected_other_purpose == "Advance Security Deposit (ASD)":
-            description_value = st.text_input(
+            asd_desc_options = [
+                "Review of ASD for April - 2023 to March - 2024",
+                "Review of ASD for April - 2024 to March - 2025",
+                "Review of ASD for April - 2025 to March - 2026",
+            ]
+            description_value = st.selectbox(
                 "Description",
-                placeholder="Enter ASD description",
+                asd_desc_options,
+                index=1,
                 key=f"asd_desc_{st.session_state.other_form_key}",
             )
             purpose_value = description_value
@@ -469,6 +477,8 @@ if st.session_state.locked:
                 st.error("Amount must be a valid whole number.")
             else:
                 total_amt = None
+            tag_value = "SD"
+            account_value = "8336 – CIVIL DEPOSITS – 101 – SECURITY DEPOSITS"
 
         elif selected_other_purpose == "Security Deposit and Meter Security Deposit (SD and MSD)":
             sd_desc_options = [
@@ -495,6 +505,8 @@ if st.session_state.locked:
                 description_value = f"{sd_desc_choice} {desc_value_4d} KVA".strip()
 
             purpose_value = description_value
+            tag_value = "SD"
+            account_value = "8336 – CIVIL DEPOSITS – 101 – SECURITY DEPOSITS"
 
             s1, s2 = st.columns(2)
             with s1:
@@ -539,6 +551,8 @@ if st.session_state.locked:
                 description_value = f"{proc_desc_choice} {desc_value_4d} KVA".strip()
 
             purpose_value = description_value
+            tag_value = "CCC/PF"
+            account_value = "0801 – Power 05 – Transmission and Distribution (101) Sale of Power"
             total_amt = 20000
             st.info("Processing Fee amount is fixed at ₹20,000")
 
@@ -666,6 +680,8 @@ if st.session_state.locked:
                     "purpose": purpose_value,
                     "selected_purpose": selected_other_purpose if st.session_state.challan_type == "OTHER" else "C. C",
                     "description": description_value,
+                    "tag": tag_value,
+                    "account": account_value,
                     "breakdown": breakdown_value,
                     "amount": format_indian_currency(total_amt),
                     "words": amount_words(total_amt),
