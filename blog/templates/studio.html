@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}AGI | Post Studio{% endblock %}
+{% block content %}
+<section>
+  <h1>Post Studio</h1>
+  <p>Create and publish posts with template fields.</p>
+  <form class="form" method="post" enctype="multipart/form-data">
+    <label>Template
+      <select name="post_type" id="post-type">
+        {% for item in post_types %}
+        <option value="{{ item }}" {% if form_data.get('post_type', 'News') == item %}selected{% endif %}>{{ item }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>Title <input type="text" name="title" value="{{ form_data.get('title', '') }}" required /></label>
+    <label>Category
+      <select name="category">
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if form_data.get('category', 'News') == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Tags (comma-separated) <input type="text" name="tags" value="{{ form_data.get('tags', '') }}" /></label>
+    <label>Summary <textarea name="summary" rows="3">{{ form_data.get('summary', '') }}</textarea></label>
+    <label>Main content <textarea name="content" rows="8">{{ form_data.get('content', '') }}</textarea></label>
+    <label>Featured image <input type="file" name="image" accept=".png,.jpg,.jpeg,.webp" /></label>
+
+    <div class="template-fields" data-template="Review">
+      <label>Score <input type="text" name="score" value="{{ form_data.get('score', '') }}" /></label>
+      <label>Pros (one per line) <textarea name="pros" rows="3">{{ form_data.get('pros', '') }}</textarea></label>
+      <label>Cons (one per line) <textarea name="cons" rows="3">{{ form_data.get('cons', '') }}</textarea></label>
+    </div>
+
+    <div class="template-fields" data-template="Guide">
+      <label>Difficulty
+        <select name="difficulty">
+          {% set selected = form_data.get('difficulty', '') %}
+          <option value="">Select</option>
+          <option value="Beginner" {% if selected == 'Beginner' %}selected{% endif %}>Beginner</option>
+          <option value="Intermediate" {% if selected == 'Intermediate' %}selected{% endif %}>Intermediate</option>
+          <option value="Advanced" {% if selected == 'Advanced' %}selected{% endif %}>Advanced</option>
+        </select>
+      </label>
+      <label>Estimated read time <input type="text" name="read_time" value="{{ form_data.get('read_time', '') }}" /></label>
+    </div>
+
+    <div class="template-fields" data-template="List">
+      <label>List items (one per line) <textarea name="list_items" rows="4">{{ form_data.get('list_items', '') }}</textarea></label>
+    </div>
+
+    <button type="submit">Publish Post</button>
+  </form>
+</section>
+<script>
+  const select = document.getElementById('post-type');
+  const groups = document.querySelectorAll('.template-fields');
+
+  function updateTemplateFields() {
+    groups.forEach((group) => {
+      group.style.display = group.dataset.template === select.value ? 'block' : 'none';
+    });
+  }
+
+  select.addEventListener('change', updateTemplateFields);
+  updateTemplateFields();
+</script>
+{% endblock %}

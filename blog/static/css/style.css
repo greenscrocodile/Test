@@ -1,0 +1,80 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --text: #f5f7fa;
+  --muted: #9aa4b2;
+  --accent: #e50914;
+  --border: #2a2f3a;
+}
+
+html[data-theme="light"] {
+  --bg: #ffffff;
+  --panel: #f4f6f8;
+  --text: #12161c;
+  --muted: #5d6675;
+  --border: #d2d8df;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.topbar {
+  background: var(--accent);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.brand { font-weight: 900; font-size: 1.3rem; }
+.tagline { flex: 1; }
+.theme-btn { border: none; border-radius: 6px; padding: 8px 12px; font-weight: 700; }
+
+.navbar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.navbar a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: .83rem;
+}
+
+.container { max-width: 1150px; margin: 1rem auto; padding: 0 1rem 2rem; }
+.hero, .card, .featured-card, .post, .form, .flash {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+}
+.featured-card h1 { margin-top: 0.3rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1rem; }
+.meta { color: var(--muted); font-size: .86rem; }
+a { color: inherit; }
+
+.form { display: grid; gap: 12px; }
+.form label { display: grid; gap: 6px; font-weight: 600; }
+.form input, .form textarea, .form select, .form button {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 10px;
+}
+.form button { background: var(--accent); border: none; color: #fff; font-weight: 700; cursor: pointer; }
+
+.flash.success { border-color: #1f8b4c; }
+.flash.error { border-color: #ad2b2b; }
+
+.post-image { width: 100%; max-height: 380px; object-fit: cover; border-radius: 8px; margin: 1rem 0; }
