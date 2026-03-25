@@ -1,6 +1,0 @@
-streamlit
-pandas
-docxtpl
-num2words
-openpyxl
-streamlit-searchbox
