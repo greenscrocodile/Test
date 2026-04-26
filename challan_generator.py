@@ -626,6 +626,16 @@ def show_challan_generator():
                                 st.session_state.other_form_key += 1
                             st.rerun()
 
+                st.write("---")
+                # Secondary Summary at the bottom of the table
+                st.success("### 📊 Batch Total (Bottom Summary)")
+                cc1, cc2 = st.columns([0.3, 0.7])
+                with cc1:
+                    st.metric("Total Amount", f"₹{f_total_amt}")
+                with cc2:
+                    st.write("**Total in Words:**")
+                    st.write(f"_{f_total_words} Only_")
+
             if st.button("🚀 Finalize Word File", type="primary"):
                 if st.session_state.challan_type == "C. C":
                     with open(CC_ADVANCE_TEMPLATE, "rb") as f:
