@@ -608,11 +608,11 @@ def show_challan_generator():
                     tcol[4].write(rec["pay_no"])
                     tcol[5].write(rec.get("purpose", "C. C"))
                     with tcol[6]:
-                        s1, s2 = st.columns([1, 1])
-                        with s1:
+                        s1, s2, s3 = st.columns([0.2, 1, 1])
+                        with s2:
                             if st.button("✏️", key=f"e_{rec['id']}"):
                                 edit_amount_dialog(i)
-                        with s2:
+                        with s3:
                             if st.button("🗑️", key=f"d_{rec['id']}"):
                                 st.session_state.all_receipts.pop(i)
                                 # Re-calculate challan numbers for the rest of the batch
@@ -623,6 +623,16 @@ def show_challan_generator():
                                     st.session_state.batch_purpose = ""
                                     st.session_state.other_form_key += 1
                                 st.rerun()
+
+                st.write("---")
+                # Unified Summary at the bottom of the table, only visible when table is visible
+                st.success("### 📊 Batch Summary")
+                cc1, cc2 = st.columns([0.3, 0.7])
+                with cc1:
+                    st.metric("Total Amount", f"₹{f_total_amt}")
+                with cc2:
+                    st.write("**Total in Words:**")
+                    st.markdown(f"#### {f_total_words} Only")
 
             st.write("---")
              # Unified Summary at the bottom
