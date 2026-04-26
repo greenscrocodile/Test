@@ -194,7 +194,7 @@ else:
     div.stButton > button {
         height: auto !important;
         width: auto !important;
-        padding: 0.5rem 1rem !important;
+        padding: 1rem 1rem !important;
         font-size: 1rem !important;
         border-radius: 8px !important;
         border: 1px solid #dcdcdc !important;
