@@ -608,29 +608,23 @@ def show_challan_generator():
                     tcol[4].write(rec["pay_no"])
                     tcol[5].write(rec.get("purpose", "C. C"))
                     with tcol[6]:
-                        s1, s2 = st.columns(2)
-                        if s1.button("✏️", key=f"e_{rec['id']}"):
-                            edit_amount_dialog(i)
-                        if s2.button("🗑️", key=f"d_{rec['id']}"):
-                            st.session_state.all_receipts.pop(i)
-                            # Re-calculate challan numbers for the rest of the batch
-                            for j in range(i, len(st.session_state.all_receipts)):
-                                current_val = int(st.session_state.all_receipts[j]["challan"])
-                                st.session_state.all_receipts[j]["challan"] = str(current_val - 1).zfill(4)
-                            if not st.session_state.all_receipts:
-                                st.session_state.batch_purpose = ""
-                                st.session_state.other_form_key += 1
-                            st.rerun()
+                        s1, s2 = st.columns([1, 1])
+                        with s1:
+                            if st.button("✏️", key=f"e_{rec['id']}"):
+                                edit_amount_dialog(i)
+                        with s2:
+                            if st.button("🗑️", key=f"d_{rec['id']}"):
+                                st.session_state.all_receipts.pop(i)
+                                # Re-calculate challan numbers for the rest of the batch
+                                for j in range(i, len(st.session_state.all_receipts)):
+                                    current_val = int(st.session_state.all_receipts[j]["challan"])
+                                    st.session_state.all_receipts[j]["challan"] = str(current_val - 1).zfill(4)
+                                if not st.session_state.all_receipts:
+                                    st.session_state.batch_purpose = ""
+                                    st.session_state.other_form_key += 1
+                                st.rerun()
 
             st.write("---")
-            # Unified Summary at the bottom
-            st.success("### 📊 Batch Summary")
-            cc1, cc2 = st.columns([0.3, 0.7])
-            with cc1:
-                st.metric("Total Amount", f"₹{f_total_amt}")
-            with cc2:
-                st.write("**Total in Words:**")
-                st.markdown(f"#### {f_total_words} Only")
 
             if st.button("🚀 Finalize Word File", type="primary"):
                 if st.session_state.challan_type == "C. C":
