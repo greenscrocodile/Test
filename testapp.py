@@ -1,5 +1,5 @@
 import streamlit as st
-from challan_generator import challan_generator
+from challan_generator import show_challan_generator
 from recon_editor import show_recon_editor
 from receipt_generator import show_receipt_generator
 from bill_calculator import show_bill_calculator
