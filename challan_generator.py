@@ -32,7 +32,7 @@ def bank_selection_dialog():
                 st.image(bank["file"])
             else:
                 st.caption(bank["name"])
-            if st.button("Select", key=f"btn_{i}"):
+            if st.button("Select", key=f"btn_{i}", use_container_width=True):
                 st.session_state.selected_bank = bank["name"]
                 st.rerun()
 
@@ -82,7 +82,7 @@ def show_challan_generator():
             disabled=st.session_state.locked,
         )
 
-        s_challan = st.text_input("Starting Challan", disabled=st.session_state.locked)
+        s_challan = st.text_input("Starting Challan", disabled=st.session_state.locked, max_chars=4)
         s_pdate = st.date_input("Challan Date", disabled=st.session_state.locked)
 
         if s_challan and not s_challan.isdigit():
@@ -143,17 +143,19 @@ def show_challan_generator():
 
     if st.session_state.locked:
         curr_count = len(st.session_state.all_receipts)
-        next_no = st.session_state.start_no + curr_count
+        next_val = st.session_state.start_no + curr_count
+        next_no_str = str(next_val).zfill(4)
+        start_no_str = str(st.session_state.start_no).zfill(4)
 
         if st.session_state.challan_type == "C. C":
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("First Challan", st.session_state.start_no)
-            m2.metric("Current No.", next_no)
+            m1.metric("First Challan", start_no_str)
+            m2.metric("Current No.", next_no_str)
             m3.metric("Date", st.session_state.formatted_pdate)
             m4.metric("Entered", curr_count)
         else:
             m1, m2 = st.columns(2)
-            m1.metric("Current No.", next_no)
+            m1.metric("Current No.", next_no_str)
             m2.metric("Date", st.session_state.formatted_pdate)
 
         try:
@@ -471,13 +473,15 @@ def show_challan_generator():
                     st.success(f"**Found:** {row['Name']} | **Purpose:** {purpose_value}")
 
         if row is not None and total_amt is not None:
-            b_col1, b_col2 = st.columns([0.9, 0.1], vertical_alignment="bottom")
+            b_col1, b_col2 = st.columns([0.85, 0.15], vertical_alignment="bottom")
             with b_col1:
                 bank_name = st.text_input(
                     "Bank Name", value=st.session_state.selected_bank, disabled=has_active_instruments
                 )
             with b_col2:
-                if st.button("🔍 Select", disabled=has_active_instruments):
+                # Add a bit of top margin to align with the text input if needed,
+                # but vertical_alignment="bottom" usually handles it.
+                if st.button("🔍 Select", disabled=has_active_instruments, use_container_width=True):
                     bank_selection_dialog()
 
             with st.expander("💳 Add Payment Details", expanded=True):
@@ -544,7 +548,7 @@ def show_challan_generator():
                 else:
                     receipt = {
                         "id": str(uuid.uuid4()),
-                        "challan": next_no,
+                        "challan": next_no_str,
                         "pdate": st.session_state.formatted_pdate,
                         "name": row["Name"],
                         "num": row["Consumer Number"],
@@ -579,20 +583,9 @@ def show_challan_generator():
         if st.session_state.all_receipts:
             st.divider()
 
-            # ALWAYS SHOW BATCH SUMMARY if receipts exist
             batch_total = sum(int(r["amount"].replace(",", "")) for r in st.session_state.all_receipts)
             f_total_amt = format_indian_currency(batch_total)
             f_total_words = amount_words(batch_total)
-
-            st.success("### 📊 Batch Summary")
-            c1, c2 = st.columns([0.3, 0.7])
-            with c1:
-                st.metric("Total Amount", f"₹{f_total_amt}")
-            with c2:
-                st.write("**Total in Words:**")
-                st.markdown(f"#### {f_total_words} Only")
-
-            st.write("")
 
             show_batch_val = st.checkbox("👁️ View/Edit Batch Table", value=st.session_state.show_batch)
             st.session_state.show_batch = show_batch_val
@@ -620,22 +613,24 @@ def show_challan_generator():
                             edit_amount_dialog(i)
                         if s2.button("🗑️", key=f"d_{rec['id']}"):
                             st.session_state.all_receipts.pop(i)
+                            # Re-calculate challan numbers for the rest of the batch
                             for j in range(i, len(st.session_state.all_receipts)):
-                                st.session_state.all_receipts[j]["challan"] -= 1
+                                current_val = int(st.session_state.all_receipts[j]["challan"])
+                                st.session_state.all_receipts[j]["challan"] = str(current_val - 1).zfill(4)
                             if not st.session_state.all_receipts:
                                 st.session_state.batch_purpose = ""
                                 st.session_state.other_form_key += 1
                             st.rerun()
 
-                st.write("---")
-                # Secondary Summary at the bottom of the table
-                st.success("### 📊 Batch Total (Bottom Summary)")
-                cc1, cc2 = st.columns([0.3, 0.7])
-                with cc1:
-                    st.metric("Total Amount", f"₹{f_total_amt}")
-                with cc2:
-                    st.write("**Total in Words:**")
-                    st.write(f"_{f_total_words} Only_")
+            st.write("---")
+            # Unified Summary at the bottom
+            st.success("### 📊 Batch Summary")
+            cc1, cc2 = st.columns([0.3, 0.7])
+            with cc1:
+                st.metric("Total Amount", f"₹{f_total_amt}")
+            with cc2:
+                st.write("**Total in Words:**")
+                st.markdown(f"#### {f_total_words} Only")
 
             if st.button("🚀 Finalize Word File", type="primary"):
                 if st.session_state.challan_type == "C. C":
