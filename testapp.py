@@ -189,19 +189,21 @@ else:
 
 else:
     # Tool-specific CSS (Reset buttons)
-    st.markdown(r"""
+    st.markdown(
+    """
     <style>
     div.stButton > button {
         height: auto !important;
         width: auto !important;
-        padding: 1rem 1rem !important;
+        padding: 0.5rem 1rem !important;
         font-size: 1rem !important;
         border-radius: 8px !important;
         border: 1px solid #dcdcdc !important;
     }
     </style>
-    """, unsafe_allow_html=True)
-
+    """,
+    unsafe_allow_html=True
+)
     # Tool Header with Back Button
     col_back, col_title = st.columns([1, 6])
     with col_back:
