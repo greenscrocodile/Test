@@ -588,7 +588,10 @@ def show_challan_generator():
                 t_head[4].write("**No.**")
                 t_head[5].write("**Purpose**")
                 t_head[6].write("**Actions**")
+            
+                batch_total = 0
                 for i, rec in enumerate(st.session_state.all_receipts):
+                    batch_total += int(rec["amount"].replace(",", ""))
                     tcol = st.columns([0.7, 2.2, 1.7, 1.2, 1.2, 2, 1.1])
                     tcol[0].write(rec["challan"])
                     tcol[1].write(rec["name"])
@@ -608,6 +611,19 @@ def show_challan_generator():
                                 st.session_state.batch_purpose = ""
                                 st.session_state.other_form_key += 1
                             st.rerun()
+                
+                st.write("---")
+                f_total_amt = format_indian_currency(batch_total)
+                f_total_words = amount_words(batch_total)
+                
+                # Summary Row
+                sum_cols = st.columns([2.9, 1.7, 5.5])
+                with sum_cols[0]:
+                    st.markdown("### Total Batch Amount:")
+                with sum_cols[1]:
+                    st.markdown(f"### ₹{f_total_amt}")
+                with sum_cols[2]:
+                    st.markdown(f"**In Words:**\n{f_total_words} Only")
 
             if st.button("🚀 Finalize Word File", type="primary"):
                 if st.session_state.challan_type == "C. C":
