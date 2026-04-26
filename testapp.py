@@ -190,7 +190,6 @@ else:
 else:
     # Tool-specific CSS (Reset buttons)
     st.markdown(
-    """
     <style>
     div.stButton > button {
         height: auto !important;
