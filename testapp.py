@@ -96,7 +96,7 @@ else:
             width: auto !important;
             padding: 0.4rem 1rem !important;
             font-size: 1rem !important;
-            border-radius: 20px !important; /* More curvy edges */
+            border-radius: 10px !important; /* More curvy edges */
         }
         .stButton button p {
             font-size: 1rem !important;
