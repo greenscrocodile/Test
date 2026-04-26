@@ -39,6 +39,16 @@ BANKS = [
     {"name": "Federal Bank", "file": "logos/Federal Bank.jpg"},
 ]
 
+CC_ADVANCE_TEMPLATE = "CCTemplate.docx"
+SD_TEMPLATE = "SDTemplate.docx"
+
+OTHER_PURPOSES = [
+    "Advance Payment",
+    "Advance Security Deposit (ASD)",
+    "Security Deposit and Meter Security Deposit (SD and MSD)",
+    "Processing Fee",
+]
+
 MONTH_LIST = [
     "January",
     "February",
@@ -56,15 +66,6 @@ MONTH_LIST = [
 MONTH_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 YEAR_OPTIONS = [2026, 2025]
 
-CC_ADVANCE_TEMPLATE = "CCTemplate.docx"
-SD_TEMPLATE = "SDTemplate.docx"
-
-OTHER_PURPOSES = [
-    "Advance Payment",
-    "Advance Security Deposit (ASD)",
-    "Security Deposit and Meter Security Deposit (SD and MSD)",
-    "Processing Fee",
-]
 
 def format_indian_currency(number):
     try:
@@ -107,5 +108,5 @@ def format_period_month_text(target_months):
 
 
 class SafeReceipt(dict):
-    def __getattr__(self, key):
-        return self.get(key, "")
+    def __getattr__(self, name):
+        return self.get(name, "")
