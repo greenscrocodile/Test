@@ -63,7 +63,6 @@ if st.session_state.active_page == "Home":
 
     st.markdown("<h1 class='main-title'>HTS WORKS</h1>", unsafe_allow_html=True)
 
-    
     tools = [
         ("📝\nChallan Generator", "Challan Generator"),
         ("🔄\nRecon Editor", "Recon Editor"),
@@ -117,9 +116,9 @@ else:
             navigate_to("Home")
     with col_title:
         st.subheader(f"Tool: {st.session_state.active_page}")
-    
+
     st.write("---")
-    
+
     # Render the selected tool
     if st.session_state.active_page == "Challan Generator":
         show_challan_generator()
