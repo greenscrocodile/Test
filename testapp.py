@@ -9,6 +9,37 @@ from file_manager import show_file_manager
 # --- APP CONFIGURATION ---
 st.set_page_config(page_title="HTS WORKS", layout="wide")
 
+# --- APP CONFIGURATION ---
+st.set_page_config(page_title="Multi-Tool Master", layout="wide")
+
+# --- GLOBAL CSS (Migrated Tool Styles) ---
+GLOBAL_CSS = r"""
+<style>
+[data-testid="stVerticalBlock"] > div { gap: 0.5rem !important; }
+
+[data-testid="stImage"] img {
+    width: 65px !important; height: 65px !important;
+    object-fit: contain !important; border-radius: 5px;
+    border: 1px solid #eee; display: block;
+    margin-left: auto; margin-right: auto;
+}
+
+.stMarkdown p {
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+    margin-bottom: 0px !important;
+}
+
+.instrument-row {
+    background-color: #f9f9f9;
+    padding: 5px;
+    border-radius: 5px;
+    margin-bottom: 2px;
+}
+</style>
+"""
+st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
+
 # --- NAVIGATION LOGIC ---
 if "active_page" not in st.session_state:
     st.session_state.active_page = "Home"
@@ -63,6 +94,44 @@ if st.session_state.active_page == "Home":
     """, unsafe_allow_html=True)
 
     st.markdown("<h1 class='main-title'>HTS WORKS</h1>", unsafe_allow_html=True)
+    # Dashboard-specific CSS
+    st.markdown(r"""
+    <style>
+    .main-title {
+        text-align: center;
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 3rem;
+        color: #1E3A8A;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    div.stButton > button {
+        width: 100% !important;
+        height: 180px !important;
+        font-size: 1.5rem !important;
+        font-weight: bold !important;
+        border-radius: 20px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        border: 3px solid #E5E7EB !important;
+        background-color: white !important;
+        color: #1F2937 !important;
+        white-space: pre-line !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    }
+    div.stButton > button:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+        border-color: #3B82F6 !important;
+        color: #3B82F6 !important;
+        background-color: #F9FAFB !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<h1 class='main-title'>🛠️ Multi-Tool Dashboard</h1>", unsafe_allow_html=True)
+
+    # 3x3 Grid
+    cols = [st.columns(3, gap="large") for _ in range(3)]
 
     tools = [
         ("📝\nChallan Generator", "Challan Generator"),
@@ -71,6 +140,7 @@ if st.session_state.active_page == "Home":
         ("🧮\nBill Calculator", "Bill Calculator"),
         ("✏️\nBill Corrector", "Bill Corrector"),
         ("📁\nFile manager", "File manager"),
+        ("6️⃣\nEmpty 6", None),
         ("7️⃣\nEmpty 7", None),
         ("8️⃣\nEmpty 8", None),
         ("9️⃣\nEmpty 9", None),
@@ -108,6 +178,28 @@ else:
         .instrument-row { background-color: #f9f9f9; padding: 5px; border-radius: 5px; margin-bottom: 2px; }
         [data-testid="stImage"] img { width: 65px !important; height: 65px !important; object-fit: contain !important; border-radius: 5px; border: 1px solid #eee; display: block; margin-left: auto; margin-right: auto; }
         </style>
+    for i in range(9):
+        label, page = tools[i]
+        with cols[i // 3][i % 3]:
+            if st.button(label, key=f"tool_btn_{i}"):
+                if page:
+                    navigate_to(page)
+                else:
+                    st.toast("🚀 This tool is coming soon!", icon="⏳")
+
+else:
+    # Tool-specific CSS (Reset buttons)
+    st.markdown(r"""
+    <style>
+    div.stButton > button {
+        height: auto !important;
+        width: auto !important;
+        padding: 0.5rem 1rem !important;
+        font-size: 1rem !important;
+        border-radius: 8px !important;
+        border: 1px solid #dcdcdc !important;
+    }
+    </style>
     """, unsafe_allow_html=True)
 
     # Tool Header with Back Button
