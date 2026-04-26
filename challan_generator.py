@@ -625,6 +625,14 @@ def show_challan_generator():
                                 st.rerun()
 
             st.write("---")
+             # Unified Summary at the bottom
+            st.success("### 📊 Batch Summary")
+            cc1, cc2 = st.columns([0.3, 0.7])
+            with cc1:
+                st.metric("Total Amount", f"₹{f_total_amt}")
+            with cc2:
+                st.write("**Total in Words:**")
+                st.markdown(f"#### {f_total_words} Only")
 
             if st.button("🚀 Finalize Word File", type="primary"):
                 if st.session_state.challan_type == "C. C":
