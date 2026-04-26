@@ -94,17 +94,23 @@ else:
         .stButton button {
             height: auto !important;
             width: auto !important;
-            padding: 0.5rem 1.5rem !important;
+            padding: 0.4rem 1rem !important;
             font-size: 1rem !important;
-            border-radius: 5px !important;
+            border-radius: 20px !important; /* More curvy edges */
         }
         .stButton button p {
             font-size: 1rem !important;
         }
+        /* Adjust action buttons in columns to fill width and align height with inputs */
+        div[data-testid="column"] .stButton button {
+            width: 100% !important;
+            height: 45px !important;
+            margin-top: 0px !important;
+        }
         /* Global styles for tool elements */
         [data-testid="stVerticalBlock"] > div { gap: 0.5rem !important; }
         .stMarkdown p { font-size: 14px !important; line-height: 1.6 !important; }
-        .instrument-row { background-color: #f9f9f9; padding: 5px; border-radius: 5px; margin-bottom: 2px; }
+        .instrument-row { background-color: #f9f9f9; padding: 5px; border-radius: 20px; margin-bottom: 2px; }
         [data-testid="stImage"] img { width: 65px !important; height: 65px !important; object-fit: contain !important; border-radius: 5px; border: 1px solid #eee; display: block; margin-left: auto; margin-right: auto; }
         </style>
     """, unsafe_allow_html=True)
