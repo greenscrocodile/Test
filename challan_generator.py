@@ -595,6 +595,7 @@ def show_challan_generator():
             st.write("")
 
             if st.checkbox("👁️ View/Edit Batch Table", value=st.session_state.show_batch):
+            if st.checkbox("👁️ View Batch Table", value=st.session_state.show_batch):
                 st.session_state.show_batch = True
                 t_head = st.columns([0.7, 2.2, 1.7, 1.2, 1.2, 2, 1.1])
                 t_head[0].write("**No.**")
@@ -606,6 +607,10 @@ def show_challan_generator():
                 t_head[6].write("**Actions**")
 
                 for i, rec in enumerate(st.session_state.all_receipts):
+            
+                batch_total = 0
+                for i, rec in enumerate(st.session_state.all_receipts):
+                    batch_total += int(rec["amount"].replace(",", ""))
                     tcol = st.columns([0.7, 2.2, 1.7, 1.2, 1.2, 2, 1.1])
                     tcol[0].write(rec["challan"])
                     tcol[1].write(rec["name"])
