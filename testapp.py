@@ -65,7 +65,7 @@ if st.session_state.active_page == "Home":
 
     tools = [
         ("📝\nChallan Generator", "Challan Generator"),
-        ("🔄\nRecon Editor", "Recon - Editor"),
+        ("🔄\nRecon - Editor", "Recon Editor"),
         ("🧾\nReceipt Generator", "Receipt Generator"),
         ("🧮\nBill Calculator", "Bill Calculator"),
         ("✏️\nBill Corrector", "Bill Corrector"),
