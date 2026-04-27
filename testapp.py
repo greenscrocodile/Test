@@ -36,7 +36,7 @@ if st.session_state.active_page == "Home":
         .stButton button {
             height: 250px !important;
             width: 100% !important;
-            border-radius: 5px !important;
+            border-radius: 20px !important;
             border: 3px solid #E5E7EB !important;
             background-color: #FFFFFF !important;
             transition: all 0.3s ease !important;
