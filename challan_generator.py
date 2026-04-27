@@ -636,7 +636,7 @@ def show_challan_generator():
 
             st.write("---")
              # Unified Summary at the bottom
-            st.success("### 📊 Batch Summary")
+            st.success("### 📊 Batch Summaryc")
             cc1, cc2 = st.columns([0.3, 0.7])
             with cc1:
                 st.metric("Total Amount", f"₹{f_total_amt}")
