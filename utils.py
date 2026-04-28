@@ -1,6 +1,22 @@
 import os
 from num2words import num2words
 
+# --- DATA STORAGE ---
+DATA_DIR = "persistent_data"
+FILES_DIR = os.path.join(DATA_DIR, "files")
+
+# --- TEMPLATE PATH RESOLUTION ---
+def get_template_path(default_name):
+    # Check if a custom template exists in the persistent holder
+    custom_path = os.path.join(FILES_DIR, default_name)
+    if os.path.exists(custom_path):
+        return custom_path
+    # Fallback to local root
+    return default_name
+
+CC_ADVANCE_TEMPLATE = get_template_path("CCTemplate.docx")
+SD_TEMPLATE = get_template_path("SDTemplate.docx")
+
 # --- BANK LOGOS CONFIGURATION ---
 BANKS = [
     {"name": "State Bank of India", "file": "logos/SBI.jpg"},
@@ -38,9 +54,6 @@ BANKS = [
     {"name": "Standard Chartered Bank", "file": "logos/Standard Chartered Bank.jpg"},
     {"name": "Federal Bank", "file": "logos/Federal Bank.jpg"},
 ]
-
-CC_ADVANCE_TEMPLATE = "CCTemplate.docx"
-SD_TEMPLATE = "SDTemplate.docx"
 
 OTHER_PURPOSES = [
     "Advance Payment",
