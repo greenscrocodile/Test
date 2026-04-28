@@ -4,7 +4,7 @@ from recon_editor import show_recon_editor
 from receipt_generator import show_receipt_generator
 from bill_calculator import show_bill_calculator
 from bill_corrector import show_bill_corrector
-from file_manager import show_file_manager
+from file_text_holder import show_file_text_holder
 
 # --- APP CONFIGURATION ---
 st.set_page_config(page_title="HTS WORKS", layout="wide")
@@ -27,12 +27,12 @@ if st.session_state.active_page == "Home":
             font-size: 6rem !important;
             font-weight: 900 !important;
             margin-top: 1rem !important;
-            margin-bottom: 3rem !important;
+            margin-bottom: 2rem !important;
             color: #1E3A8A !important;
             letter-spacing: 5px !important;
             text-transform: uppercase;
         }
-        /* Target all buttons on home page */
+        /* Target all buttons on home page to be uniform */
         .stButton button {
             height: 250px !important;
             width: 100% !important;
@@ -40,6 +40,11 @@ if st.session_state.active_page == "Home":
             border: 3px solid #E5E7EB !important;
             background-color: #FFFFFF !important;
             transition: all 0.3s ease !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 20px !important;
         }
         .stButton button:hover {
             border-color: #3B82F6 !important;
@@ -47,16 +52,14 @@ if st.session_state.active_page == "Home":
             transform: translateY(-5px) !important;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
         }
+        /* Style for the text inside the button */
         .stButton button p {
-            font-size: 1.5rem !important;
+            font-size: 1.4rem !important;
             font-weight: 800 !important;
-            line-height: 1.2 !important;
+            line-height: 1.3 !important;
             color: #111827 !important;
             white-space: pre-wrap !important;
-        }
-        /* Attempt to make symbols/emojis larger */
-        .stButton button p::first-line {
-            font-size: 4rem !important;
+            text-align: center !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -69,23 +72,24 @@ if st.session_state.active_page == "Home":
         ("🧾\nReceipt Generator", "Receipt Generator"),
         ("🧮\nBill Calculator", "Bill Calculator"),
         ("✏️\nBill Corrector", "Bill Corrector"),
-        ("📁\nFile manager", "File manager"),
-        ("7️⃣\nEmpty 7", None),
-        ("8️⃣\nEmpty 8", None),
-        ("9️⃣\nEmpty 9", None),
+        ("📁\nFile Manager", "File Manager"),
+        ("🗂️\nFile & Text Holder", "File & Text Holder"),
+        ("🚀\nComing Soon", "Coming Soon"),
     ]
 
-    for i in range(0, 9, 3):
-        cols = st.columns(3, gap="large")
-        for j in range(3):
+    # 2 rows of 4 columns
+    for i in range(0, 8, 4):
+        cols = st.columns(4, gap="large")
+        for j in range(4):
             idx = i + j
-            label, page = tools[idx]
-            with cols[j]:
-                if st.button(label, key=f"dash_btn_{idx}"):
-                    if page:
-                        navigate_to(page)
-                    else:
-                        st.toast("🚀 Coming Soon!")
+            if idx < len(tools):
+                label_display, page_name = tools[idx]
+                with cols[j]:
+                    if st.button(label_display, key=f"dash_btn_{idx}"):
+                        if page_name != "Coming Soon":
+                            navigate_to(page_name)
+                        else:
+                            st.toast("🚀 Coming Soon!")
 
 else:
     st.markdown(r"""
@@ -136,5 +140,8 @@ else:
         show_bill_calculator()
     elif st.session_state.active_page == "Bill Corrector":
         show_bill_corrector()
-    elif st.session_state.active_page == "File manager":
+    elif st.session_state.active_page == "File Manager":
+        from file_manager import show_file_manager
         show_file_manager()
+    elif st.session_state.active_page == "File & Text Holder":
+        show_file_text_holder()
