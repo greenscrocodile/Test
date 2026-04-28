@@ -24,26 +24,25 @@ if st.session_state.active_page == "Home":
         <style>
         .main-title {
             text-align: center;
-            font-size: 6rem !important;
+            font-size: clamp(3rem, 10vw, 5rem) !important;
             font-weight: 900 !important;
-            margin-top: 1rem !important;
+            margin-top: 0.5rem !important;
             margin-bottom: 2rem !important;
             color: #1E3A8A !important;
-            letter-spacing: 5px !important;
+            letter-spacing: 2px !important;
             text-transform: uppercase;
         }
-        /* Target all buttons on home page to be uniform */
+        /* Dashboard Button Styling */
         .stButton button {
-            height: 250px !important;
+            height: 220px !important;
             width: 100% !important;
+            max-width: 350px !important; /* Prevent huge buttons on wide screens */
+            margin: 0 auto !important;
+            display: flex !important;
             border-radius: 20px !important;
             border: 3px solid #E5E7EB !important;
             background-color: #FFFFFF !important;
             transition: all 0.3s ease !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
             padding: 20px !important;
         }
         .stButton button:hover {
@@ -52,7 +51,6 @@ if st.session_state.active_page == "Home":
             transform: translateY(-5px) !important;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
         }
-        /* Style for the text inside the button */
         .stButton button p {
             font-size: 1.4rem !important;
             font-weight: 800 !important;
@@ -60,6 +58,12 @@ if st.session_state.active_page == "Home":
             color: #111827 !important;
             white-space: pre-wrap !important;
             text-align: center !important;
+            word-wrap: break-word !important;
+        }
+        /* Center the button grid on very wide screens */
+        [data-testid="column"] {
+            display: flex !important;
+            justify-content: center !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -68,7 +72,7 @@ if st.session_state.active_page == "Home":
 
     tools = [
         ("📝\nChallan Generator", "Challan Generator"),
-        ("🔄\nRecon - Editor", "Recon Editor"),
+        ("🔄\nRecon Editor", "Recon Editor"),
         ("🧾\nReceipt Generator", "Receipt Generator"),
         ("🧮\nBill Calculator", "Bill Calculator"),
         ("✏️\nBill Corrector", "Bill Corrector"),
@@ -77,9 +81,8 @@ if st.session_state.active_page == "Home":
         ("🚀\nComing Soon", "Coming Soon"),
     ]
 
-    # 2 rows of 4 columns
     for i in range(0, 8, 4):
-        cols = st.columns(4, gap="large")
+        cols = st.columns(4, gap="medium")
         for j in range(4):
             idx = i + j
             if idx < len(tools):
@@ -98,9 +101,10 @@ else:
         .stButton button {
             height: auto !important;
             width: auto !important;
+            max-width: none !important;
             padding: 0.4rem 1rem !important;
             font-size: 1rem !important;
-            border-radius: 10px !important; /* More curvy edges */
+            border-radius: 20px !important;
         }
         .stButton button p {
             font-size: 1rem !important;
