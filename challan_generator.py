@@ -634,7 +634,7 @@ def show_challan_generator():
                     st.write("**Total in Words:**")
                     st.markdown(f"#### {f_total_words} Only")
 
-            st.write("---")
+            #st.write("---")
 
             if st.button("🚀 Finalize Word File", type="primary"):
                 if st.session_state.challan_type == "C. C":

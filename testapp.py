@@ -68,7 +68,7 @@ if st.session_state.active_page == "Home":
 
     tools = [
         ("📝\nChallan Generator", "Challan Generator"),
-        ("🔄\nRecon Editor", "Recon Editor"),
+        ("🔄\nRecon - Editor", "Recon Editor"),
         ("🧾\nReceipt Generator", "Receipt Generator"),
         ("🧮\nBill Calculator", "Bill Calculator"),
         ("✏️\nBill Corrector", "Bill Corrector"),
@@ -100,7 +100,7 @@ else:
             width: auto !important;
             padding: 0.4rem 1rem !important;
             font-size: 1rem !important;
-            border-radius: 20px !important;
+            border-radius: 10px !important; /* More curvy edges */
         }
         .stButton button p {
             font-size: 1rem !important;
