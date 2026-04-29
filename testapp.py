@@ -73,13 +73,13 @@ div[data-testid="column"] .stButton {
 
     tools = [
         ("📝\nChallan Generator ", "Challan Generator"),
-        ("🔄\nRecon Editor      ", "Recon Editor"),
-        ("🧾\nReceipt Generator ", "Receipt Generator"),
-        ("🧮\nBill Calculator   ", "Bill Calculator"),
-        ("✏️\nBill Corrector    ", "Bill Corrector"),
-        ("📁\nFile Manager      ", "File Manager"),
+        ("🔄\n      Recon Editor", "Recon Editor"),
+        ("🧾\n Receipt Generator", "Receipt Generator"),
+        ("🧮\n   Bill Calculator", "Bill Calculator"),
+        ("✏️\n    Bill Corrector", "Bill Corrector"),
+        ("📁\n      File Manager", "File Manager"),
         ("🗂️\nFile & Text Holder", "File & Text Holder"),
-        ("🚀\nComing Soon    ", "Coming Soon"),
+        ("🚀\n       Coming Soon", "Coming Soon"),
     ]
 
     for i in range(0, 8, 4):
