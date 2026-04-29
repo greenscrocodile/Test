@@ -20,39 +20,50 @@ def navigate_to(page):
 # --- PAGE RENDERING ---
 
 if st.session_state.active_page == "Home":
-    st.markdown("""
+   st.markdown("""
 <style>
 
-/* Main buttons */
+/* Button Container */
+div[data-testid="column"] .stButton {
+    width: 100%;
+}
+
+/* Force ALL buttons same size */
 .stButton button {
     width: 100% !important;
     height: 220px !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
 
     border-radius: 22px !important;
     border: 2px solid #d1d5db !important;
 
-    padding: 20px !important;
+    padding: 18px !important;
 
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
 
-    transition: 0.25s ease;
+    white-space: normal !important;
+}
+
+/* Text styling */
+.stButton button p {
+    width: 100% !important;
+    text-align: center !important;
+
+    font-size: 1.4rem !important;
+    font-weight: 800 !important;
+    line-height: 1.35 !important;
+
+    white-space: normal !important;
+    word-break: break-word !important;
 }
 
 /* Hover */
 .stButton button:hover {
     transform: translateY(-4px);
     border-color: #3b82f6 !important;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
-
-/* Text */
-.stButton button p {
-    font-size: 1.45rem !important;
-    font-weight: 800 !important;
-    text-align: center !important;
-    line-height: 1.35 !important;
 }
 
 </style>
