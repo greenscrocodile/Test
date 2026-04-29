@@ -20,54 +20,43 @@ def navigate_to(page):
 # --- PAGE RENDERING ---
 
 if st.session_state.active_page == "Home":
-    st.markdown(r"""
-        <style>
-        .main-title {
-            text-align: center;
-            font-size: clamp(3rem, 10vw, 5rem) !important;
-            font-weight: 900 !important;
-            margin-top: 0.5rem !important;
-            margin-bottom: 2rem !important;
-            color: #1E3A8A !important;
-            letter-spacing: 2px !important;
-            text-transform: uppercase;
-        }
-        /* Dashboard Button Styling */
-        .stButton button {
-            height: 220px !important;
-            width: 100% !important;
-            min-width: 100% !important;
-            max-width: 100% !important; /* Prevent huge buttons on wide screens */
-            margin: 0 auto;
-            display: flex !important;
-            border-radius: 20px !important;
-            border: 3px solid #E5E7EB !important;
-            background-color: #FFFFFF !important;
-            transition: all 0.3s ease !important;
-            padding: 20px !important;
-        }
-        .stButton button:hover {
-            border-color: #3B82F6 !important;
-            background-color: #F9FAFB !important;
-            transform: translateY(-5px) !important;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-        }
-        .stButton button p {
-            font-size: 1.4rem !important;
-            font-weight: 800 !important;
-            line-height: 1.3 !important;
-            color: #111827 !important;
-            white-space: pre-wrap !important;
-            text-align: center !important;
-            word-wrap: break-word !important;
-        }
-        /* Center the button grid on very wide screens */
-        [data-testid="column"] {
-            display: flex !important;
-            justify-content: center !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    st.markdown("""
+<style>
+
+/* Main buttons */
+.stButton button {
+    width: 100% !important;
+    height: 220px !important;
+
+    border-radius: 22px !important;
+    border: 2px solid #d1d5db !important;
+
+    padding: 20px !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+
+    transition: 0.25s ease;
+}
+
+/* Hover */
+.stButton button:hover {
+    transform: translateY(-4px);
+    border-color: #3b82f6 !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+/* Text */
+.stButton button p {
+    font-size: 1.45rem !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    line-height: 1.35 !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
     st.markdown("<h1 class='main-title'>HTS WORKS</h1>", unsafe_allow_html=True)
 
@@ -83,7 +72,7 @@ if st.session_state.active_page == "Home":
     ]
 
     for i in range(0, 8, 4):
-        cols = st.columns([1,1,1,1], gap="medium")
+        cols = st.columns(4, gap="small")
         for j in range(4):
             idx = i + j
             if idx < len(tools):
