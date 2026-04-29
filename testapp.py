@@ -38,7 +38,7 @@ if st.session_state.active_page == "Home":
             width: 100% !important;
             min-width: 100% !important;
             max-width: 100% !important; /* Prevent huge buttons on wide screens */
-            margin: 0 auto !important;
+            margin: 0 auto;
             display: flex !important;
             border-radius: 20px !important;
             border: 3px solid #E5E7EB !important;
