@@ -33,7 +33,7 @@ div[data-testid="column"] .stButton {
     width: 100% !important;
     height: 220px !important;
     min-width: 100% !important;
-    max-width: 100% !important;
+    max-width: 500px !important;
 
     border-radius: 22px !important;
     border: 2px solid #d1d5db !important;
