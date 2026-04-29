@@ -20,7 +20,7 @@ def navigate_to(page):
 # --- PAGE RENDERING ---
 
 if st.session_state.active_page == "Home":
-   st.markdown("""
+    st.markdown("""
 <style>
 
 /* Button Container */
