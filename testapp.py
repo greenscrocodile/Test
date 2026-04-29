@@ -72,14 +72,14 @@ div[data-testid="column"] .stButton {
     st.markdown("<h1 class='main-title'>HTS WORKS</h1>", unsafe_allow_html=True)
 
     tools = [
-        ("📝\nChallan Generator ", "Challan Generator"),
-        ("🔄\n      Recon Editor", "Recon Editor"),
-        ("🧾\n Receipt Generator", "Receipt Generator"),
-        ("🧮\n   Bill Calculator", "Bill Calculator"),
-        ("✏️\n    Bill Corrector", "Bill Corrector"),
-        ("📁\n      File Manager", "File Manager"),
+        ("📝\nChallans Generator ", "Challan Generator"),
+        ("🔄\nReconslation Editor", "Recon Editor"),
+        ("🧾\nReceipts Generator", "Receipt Generator"),
+        ("🧮\nCC Bill Calculator", "Bill Calculator"),
+        ("✏️\nBill Auto Corrects", "Bill Corrector"),
+        ("📁\nFile Manager  menu", "File Manager"),
         ("🗂️\nFile & Text Holder", "File & Text Holder"),
-        ("🚀\n       Coming Soon", "Coming Soon"),
+        ("🚀\nComing Soon.......", "Coming Soon"),
     ]
 
     for i in range(0, 8, 4):
