@@ -83,7 +83,7 @@ if st.session_state.active_page == "Home":
     ]
 
     for i in range(0, 8, 4):
-        cols = st.columns(4, gap="medium")
+        cols = st.columns([1,1,1,1], gap="medium")
         for j in range(4):
             idx = i + j
             if idx < len(tools):
