@@ -36,7 +36,8 @@ if st.session_state.active_page == "Home":
         .stButton button {
             height: 220px !important;
             width: 100% !important;
-            max-width: 350px !important; /* Prevent huge buttons on wide screens */
+            min-width: 100% !important;
+            max-width: 100% !important; /* Prevent huge buttons on wide screens */
             margin: 0 auto !important;
             display: flex !important;
             border-radius: 20px !important;
