@@ -87,8 +87,11 @@ def show_challan_generator():
         s_challan = st.text_input("Starting Challan", disabled=st.session_state.locked, max_chars=4)
         s_pdate = st.date_input("Challan Date", disabled=st.session_state.locked)
 
-        if s_challan and not s_challan.isdigit():
-            st.error("Challan Number must contain Numbers only.")
+        if s_challan:
+            if not s_challan.isdigit():
+                st.error("Challan Number must contain Numbers only.")
+            elif len(s_challan) > 4:
+                st.error("Challan Number can have maximum 4 digits.")
 
         st.divider()
 
@@ -124,8 +127,8 @@ def show_challan_generator():
 
         if not st.session_state.locked:
             if st.button("Confirm Setup", type="primary"):
-                if not s_challan or not s_challan.isdigit():
-                    st.error("Enter a valid Numeric Challan Number.")
+                if not s_challan or not s_challan.isdigit() or len(s_challan) > 4:
+                    st.error("Enter a valid Numeric Challan Number (max 4 digits).")
                 elif data_source == "Local Upload" and not data_file_buffer:
                     st.error("Upload Master Data.")
                 elif data_source == "GitHub Holder" and not selected_gh_file:
@@ -351,6 +354,12 @@ def show_challan_generator():
             st.divider()
             batch_total = sum(int(r["amount"].replace(",", "")) for r in st.session_state.all_receipts)
 
+            st.success("### 📊 Batch Summary")
+            cc1, cc2 = st.columns([0.3, 0.7])
+            cc1.metric("Total Amount", f"₹{format_indian_currency(batch_total)}")
+            cc2.write("**Total in Words:**")
+            cc2.markdown(f"#### {amount_words(batch_total)} Only")
+
             show_batch_val = st.checkbox("👁️ View Batch Table", value=st.session_state.show_batch)
             st.session_state.show_batch = show_batch_val
 
@@ -371,13 +380,6 @@ def show_challan_generator():
                                 st.session_state.all_receipts[j]["challan"] = str(current_val - 1).zfill(4)
                             if not st.session_state.all_receipts: st.session_state.batch_purpose = ""; st.session_state.other_form_key += 1
                             st.rerun()
-
-                # Enhancement: Batch Summary at the bottom
-                st.success("### 📊 Batch Summary")
-                cc1, cc2 = st.columns([0.3, 0.7])
-                cc1.metric("Total Amount", f"₹{format_indian_currency(batch_total)}")
-                cc2.write("**Total in Words:**")
-                cc2.markdown(f"#### {amount_words(batch_total)} Only")
 
             st.write("---")
             if st.button("🚀 Finalize Word File", type="primary", key="finalize_btn"):
