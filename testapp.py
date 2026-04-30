@@ -36,10 +36,10 @@ if st.session_state.active_page == "Home":
         .stButton button {
             height: 220px !important;
             width: 100% !important;
-            max-width: 350px !important; /* Prevent huge buttons on wide screens */
+            max-width: 350px !important;
             margin: 0 auto !important;
             display: flex !important;
-            border-radius: 10px !important;
+            border-radius: 10px !important; /* 10px as requested */
             border: 3px solid #E5E7EB !important;
             background-color: #FFFFFF !important;
             transition: all 0.3s ease !important;
@@ -60,85 +60,37 @@ if st.session_state.active_page == "Home":
             text-align: center !important;
             word-wrap: break-word !important;
         }
-        /* Center the button grid on very wide screens */
+        /* Center the button grid */
         [data-testid="column"] {
             display: flex !important;
             justify-content: center !important;
         }
         </style>
     """, unsafe_allow_html=True)
-    st.markdown("""
-<style>
-
-/* Button Container */
-div[data-testid="column"] .stButton {
-    width: 100%;
-}
-
-/* Force ALL buttons same size */
-.stButton button {
-    width: 100% !important;
-    height: 220px !important;
-    min-width: 100% !important;
-    max-width: 5000px !important;
-
-    border-radius: 22px !important;
-    border: 2px solid #d1d5db !important;
-
-    padding: 18px !important;
-
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-
-    white-space: normal !important;
-}
-
-/* Text styling */
-.stButton button p {
-    width: 100% !important;
-    text-align: center !important;
-
-    font-size: 1.4rem !important;
-    font-weight: 800 !important;
-    line-height: 1.35 !important;
-
-    white-space: normal !important;
-    word-break: break-word !important;
-}
-
-/* Hover */
-.stButton button:hover {
-    transform: translateY(-4px);
-    border-color: #3b82f6 !important;
-}
-
-</style>
-""", unsafe_allow_html=True)
 
     st.markdown("<h1 class='main-title'>HTS WORKS</h1>", unsafe_allow_html=True)
 
     tools = [
-        ("📝\nChallans Generator ", "Challan Generator"),
-        ("🔄\nReconslation Editor", "Recon Editor"),
+        ("📝\nChallan Generator", "Challan Generator"),
+        ("🔄\nRecon Editor", "Recon Editor"),
         ("🧾\nReceipt Generator", "Receipt Generator"),
-        ("🧮\nCC Bill Calculator", "Bill Calculator"),
-        ("✏️\nBill Auto Correction", "Bill Corrector"),
-        ("📁\nFile Manager  menu", "File Manager"),
+        ("🧮\nBill Calculator", "Bill Calculator"),
+        ("✏️\nBill Corrector", "Bill Corrector"),
+        ("📁\nFile Manager", "File Manager"),
         ("🗂️\nFile & Text Holder", "File & Text Holder"),
-        ("🚀\nComing Soon......", "Coming Soon"),
+        ("🚀\nComing Soon", "Coming Soon"),
     ]
 
     for i in range(0, 8, 4):
-        cols = st.columns(4, gap="small")
+        cols = st.columns(4, gap="medium")
         for j in range(4):
             idx = i + j
             if idx < len(tools):
-                label_display, page_name = tools[idx]
+                label, page = tools[idx]
                 with cols[j]:
-                    if st.button(label_display, key=f"dash_btn_{idx}"):
-                        if page_name != "Coming Soon":
-                            navigate_to(page_name)
+                    if st.button(label, key=f"dash_btn_{idx}"):
+                        if page != "Coming Soon":
+                            navigate_to(page)
                         else:
                             st.toast("🚀 Coming Soon!")
 
@@ -152,18 +104,17 @@ else:
             max-width: none !important;
             padding: 0.4rem 1rem !important;
             font-size: 1rem !important;
-            border-radius: 10px !important;
+            border-radius: 10px !important; /* 10px for consistency */
         }
         .stButton button p {
             font-size: 1rem !important;
         }
-        /* Adjust action buttons in columns to fill width and align height with inputs */
+        /* Adjust action buttons in columns */
         div[data-testid="column"] .stButton button {
             width: 100% !important;
             height: 45px !important;
             margin-top: 0px !important;
         }
-        /* Global styles for tool elements */
         [data-testid="stVerticalBlock"] > div { gap: 0.5rem !important; }
         .stMarkdown p { font-size: 14px !important; line-height: 1.6 !important; }
         .instrument-row { background-color: #f9f9f9; padding: 5px; border-radius: 10px; margin-bottom: 2px; }
@@ -171,7 +122,6 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-    # Tool Header with Back Button
     col_back, col_title = st.columns([1, 6])
     with col_back:
         if st.button("⬅️ Back to Home"):
@@ -181,7 +131,6 @@ else:
 
     st.write("---")
 
-    # Render the selected tool
     if st.session_state.active_page == "Challan Generator":
         show_challan_generator()
     elif st.session_state.active_page == "Recon Editor":
