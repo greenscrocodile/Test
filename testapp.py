@@ -67,22 +67,70 @@ if st.session_state.active_page == "Home":
         }
         </style>
     """, unsafe_allow_html=True)
+    st.markdown("""
+<style>
+
+/* Button Container */
+div[data-testid="column"] .stButton {
+    width: 100%;
+}
+
+/* Force ALL buttons same size */
+.stButton button {
+    width: 100% !important;
+    height: 220px !important;
+    min-width: 100% !important;
+    max-width: 5000px !important;
+
+    border-radius: 22px !important;
+    border: 2px solid #d1d5db !important;
+
+    padding: 18px !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+
+    white-space: normal !important;
+}
+
+/* Text styling */
+.stButton button p {
+    width: 100% !important;
+    text-align: center !important;
+
+    font-size: 1.4rem !important;
+    font-weight: 800 !important;
+    line-height: 1.35 !important;
+
+    white-space: normal !important;
+    word-break: break-word !important;
+}
+
+/* Hover */
+.stButton button:hover {
+    transform: translateY(-4px);
+    border-color: #3b82f6 !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
 
     st.markdown("<h1 class='main-title'>HTS WORKS</h1>", unsafe_allow_html=True)
 
     tools = [
-        ("📝\nChallan Generator", "Challan Generator"),
-        ("🔄\nRecon Editor", "Recon Editor"),
+        ("📝\nChallans Generator ", "Challan Generator"),
+        ("🔄\nReconslation Editor", "Recon Editor"),
         ("🧾\nReceipt Generator", "Receipt Generator"),
-        ("🧮\nBill Calculator", "Bill Calculator"),
-        ("✏️\nBill Corrector", "Bill Corrector"),
-        ("📁\nFile Manager", "File Manager"),
+        ("🧮\nCC Bill Calculator", "Bill Calculator"),
+        ("✏️\nBill Auto Correction", "Bill Corrector"),
+        ("📁\nFile Manager  menu", "File Manager"),
         ("🗂️\nFile & Text Holder", "File & Text Holder"),
-        ("🚀\nComing Soon", "Coming Soon"),
+        ("🚀\nComing Soon......", "Coming Soon"),
     ]
 
     for i in range(0, 8, 4):
-        cols = st.columns(4, gap="medium")
+        cols = st.columns(4, gap="small")
         for j in range(4):
             idx = i + j
             if idx < len(tools):
