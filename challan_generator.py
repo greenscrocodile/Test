@@ -3,6 +3,7 @@ import os
 import re
 import uuid
 import requests
+import numbers
 from datetime import date, datetime
 
 import pandas as pd
@@ -189,6 +190,8 @@ def show_challan_generator():
         account_value = ""
         has_active_instruments = len(st.session_state.temp_instruments) > 0
 
+        has_row_data = False
+
         if st.session_state.challan_type == "C. C":
             st.subheader("📄 C.C Challan Input")
             col_t1, _ = st.columns([0.2, 0.8])
@@ -298,6 +301,14 @@ def show_challan_generator():
                     if not result.empty: row = result.iloc[0]
                     else: st.error("Not found.")
 
+            has_row_data = isinstance(row, (dict, pd.Series))
+            if has_row_data:
+                st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
+
+        has_row_data = has_row_data or isinstance(row, (dict, pd.Series))
+        has_total_amount = isinstance(total_amt, numbers.Real) and not pd.isna(total_amt)
+
+        if has_row_data and has_total_amount:
             if row is not None: st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
 
         if row is not None and total_amt is not None:
