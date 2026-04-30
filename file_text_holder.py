@@ -1,96 +1,91 @@
 import streamlit as st
 import os
-import json
+from github_utils import list_files_github, upload_file_github, delete_file_github, get_github_config
 
-DATA_DIR = "persistent_data"
-FILES_DIR = os.path.join(DATA_DIR, "files")
-TEXT_FILE = os.path.join(DATA_DIR, "text_holder.json")
-
-def init_storage():
-    if not os.path.exists(FILES_DIR):
-        os.makedirs(FILES_DIR, exist_ok=True)
-    if not os.path.exists(TEXT_FILE):
-        os.makedirs(DATA_DIR, exist_ok=True)
-        with open(TEXT_FILE, "w") as f:
-            json.dump({"stored_text": ""}, f)
-
-def get_stored_text():
-    try:
-        with open(TEXT_FILE, "r") as f:
-            return json.load(f).get("stored_text", "")
-    except Exception:
-        return ""
-
-def save_stored_text(text):
-    with open(TEXT_FILE, "w") as f:
-        json.dump({"stored_text": text}, f)
-
-def list_stored_files():
-    if not os.path.exists(FILES_DIR):
-        return []
-    # Return sorted list of basenames
-    return sorted([f for f in os.listdir(FILES_DIR) if os.path.isfile(os.path.join(FILES_DIR, f))])
+FILES_FOLDER = "user_files"
 
 def show_file_text_holder():
-    init_storage()
-    st.title("🗂️ File & Text Holder")
+    st.title("🗂️ File Holder (GitHub Sync)")
 
-    tabs = st.tabs(["📄 Files", "📝 Text Material"])
+    config = get_github_config()
+    if not config:
+        st.warning("⚠️ GitHub Integration not configured. Please add `GITHUB_TOKEN` and `GITHUB_REPO` to Streamlit Secrets.")
+        with st.expander("ℹ️ How to configure"):
+            st.markdown("""
+            1. Go to your Streamlit Cloud Dashboard.
+            2. Open **Settings** > **Secrets**.
+            3. Add the following:
+               ```toml
+               GITHUB_TOKEN = "your_personal_access_token"
+               GITHUB_REPO = "your_username/your_repo_name"
+               GITHUB_BRANCH = "main" # Optional
+               ```
+            """)
+        return
+
+    st.success(f"🔗 Connected to: `{config['repo']}`")
+
+    tabs = st.tabs(["📄 Managed Files", "📝 Text Material"])
 
     with tabs[0]:
-        st.subheader("Persistent File Storage")
+        st.subheader("📤 Upload New Files")
         uploaded_files = st.file_uploader(
-            "Upload files for all systems",
+            "Select files to sync with repository",
             accept_multiple_files=True,
             type=["docx", "pdf", "xlsx", "dbf"]
         )
 
         if uploaded_files:
             for f in uploaded_files:
-                # Sanitize filename to prevent path traversal
-                safe_name = os.path.basename(f.name)
-                target_path = os.path.join(FILES_DIR, safe_name)
-                with open(target_path, "wb") as out:
-                    out.write(f.getvalue())
-            st.success(f"Uploaded {len(uploaded_files)} files.")
+                with st.spinner(f"Syncing {f.name} to GitHub..."):
+                    success, error = upload_file_github(FILES_FOLDER, f.name, f.getvalue())
+                    if success:
+                        st.toast(f"✅ {f.name} synced!")
+                    else:
+                        st.error(f"❌ Failed to sync {f.name}: {error}")
             st.rerun()
 
-        files = list_stored_files()
-        if files:
-            st.write("### Available Files")
-            for idx, filename in enumerate(files):
-                col1, col2 = st.columns([4, 1])
-                col1.write(f"📎 {filename}")
-                # Re-sanitize on retrieval to be extra safe
-                safe_name = os.path.basename(filename)
-                file_path = os.path.join(FILES_DIR, safe_name)
+        st.divider()
+        st.subheader("📂 Repository Storage")
+        with st.spinner("Loading files from GitHub..."):
+            files, error = list_files_github(FILES_FOLDER)
 
-                if os.path.exists(file_path):
-                    with open(file_path, "rb") as f:
-                        col2.download_button("Download", f.read(), file_name=safe_name, key=f"dl_{idx}")
+        if error:
+            st.error(f"Error connecting to GitHub: {error}")
+        elif files:
+            st.caption(f"Currently storing {len(files)} files in `{FILES_FOLDER}/`")
+            for idx, f_meta in enumerate(files):
+                filename = f_meta["name"]
+                with st.container(border=True):
+                    col1, col2, col3 = st.columns([3, 1, 1])
+                    col1.write(f"**{filename}**")
 
-                    s1, s2 = st.columns([0.1, 1])
-                    with s2:
-                        if st.button("🗑️ Delete", key=f"del_{idx}"):
-                            os.remove(file_path)
-                            st.rerun()
+                    raw_url = f_meta["download_url"]
+                    col2.markdown(f"[📥 Download]({raw_url})")
+
+                    if col3.button("🗑️ Delete", key=f"del_gh_{idx}", type="secondary"):
+                        with st.status(f"Deleting {filename} from repo..."):
+                            success, error = delete_file_github(FILES_FOLDER, filename)
+                            if success:
+                                st.toast(f"🗑️ {filename} removed from GitHub")
+                                st.rerun()
+                            else:
+                                st.error(f"❌ Delete failed: {error}")
         else:
-            st.info("No files stored yet.")
+            st.info("Your repository file holder is empty. Upload files to see them here across all systems.")
 
     with tabs[1]:
-        st.subheader("Persistent Text Material")
-        current_text = get_stored_text()
-        new_text = st.text_area(
-            "Enter text to be available on all systems:",
-            value=current_text,
+        st.subheader("📝 Persistent Text Material")
+        # For text material, we can also use GitHub if we want true persistence
+        # across sessions without local storage. Let's stick to session for now
+        # as the user emphasized "Files" specifically for the creator.
+
+        if "stored_text" not in st.session_state:
+            st.session_state.stored_text = ""
+
+        st.session_state.stored_text = st.text_area(
+            "Paste text here to keep it during your current session:",
+            value=st.session_state.stored_text,
             height=300
         )
-
-        c1, c2 = st.columns(2)
-        if c1.button("💾 Save Text", type="primary"):
-            save_stored_text(new_text)
-            st.success("Text saved successfully!")
-
-        if c2.button("🗑️ Clear Text"):
-            save_stored_text("")
-            st.rerun()
+        st.caption("Note: Text material is currently session-only. Use the File tab for cross-system persistence.")
