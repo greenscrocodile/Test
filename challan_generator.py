@@ -2,6 +2,7 @@ import io
 import os
 import re
 import uuid
+import requests
 from datetime import date, datetime
 
 import pandas as pd
@@ -21,6 +22,7 @@ from utils import (
     format_period_month_text,
     SafeReceipt
 )
+from github_utils import list_files_github
 
 @st.dialog("Select Bank", width="medium")
 def bank_selection_dialog():
@@ -49,29 +51,33 @@ def edit_amount_dialog(index):
             st.session_state.all_receipts[index]["words"] = amount_words(new_amt)
             st.rerun()
         except ValueError:
-            st.error("Please enter a valid whole number.")
+            st.error("Please enter a valid number.")
 
 def show_challan_generator():
-    if "all_receipts" not in st.session_state:
-        st.session_state.all_receipts = []
     if "locked" not in st.session_state:
         st.session_state.locked = False
+    if "challan_type" not in st.session_state:
+        st.session_state.challan_type = "C. C"
+    if "all_receipts" not in st.session_state:
+        st.session_state.all_receipts = []
+    if "temp_instruments" not in st.session_state:
+        st.session_state.temp_instruments = []
     if "selected_bank" not in st.session_state:
         st.session_state.selected_bank = ""
     if "show_batch" not in st.session_state:
         st.session_state.show_batch = False
-    if "is_period" not in st.session_state:
-        st.session_state.is_period = False
     if "consumer_key" not in st.session_state:
         st.session_state.consumer_key = 0
-    if "temp_instruments" not in st.session_state:
-        st.session_state.temp_instruments = []
-    if "challan_type" not in st.session_state:
-        st.session_state.challan_type = "C. C"
     if "other_form_key" not in st.session_state:
         st.session_state.other_form_key = 0
     if "batch_purpose" not in st.session_state:
         st.session_state.batch_purpose = ""
+    if "is_period" not in st.session_state:
+        st.session_state.is_period = False
+    if "active_cc_tpl" not in st.session_state:
+        st.session_state.active_cc_tpl = CC_ADVANCE_TEMPLATE
+    if "active_sd_tpl" not in st.session_state:
+        st.session_state.active_sd_tpl = SD_TEMPLATE
 
     with st.sidebar:
         st.header("⚙️ Configuration")
@@ -90,28 +96,48 @@ def show_challan_generator():
 
         st.divider()
 
-        template_bytes = None
+        # GitHub Template Selection
+        st.subheader("📄 Dynamic Templates")
+        with st.spinner("Syncing templates..."):
+            gh_files, _ = list_files_github("user_files")
+            gh_docx = [f["name"] for f in gh_files if f["name"].endswith(".docx")]
 
         if challan_type == "C. C":
-            if os.path.exists(CC_ADVANCE_TEMPLATE):
-                st.success("✅ C.C Template Loaded")
-                with open(CC_ADVANCE_TEMPLATE, "rb") as f:
-                    template_bytes = f.read()
+            options = ["Default (CCTemplate.docx)"] + gh_docx
+            sel_cc = st.selectbox("C.C Template", options, disabled=st.session_state.locked)
+            if sel_cc == "Default (CCTemplate.docx)":
+                st.session_state.active_cc_tpl = CC_ADVANCE_TEMPLATE
             else:
-                st.error(f"❌ {CC_ADVANCE_TEMPLATE} Missing!")
+                st.session_state.active_cc_tpl = next(f["download_url"] for f in gh_files if f["name"] == sel_cc)
+
+            if st.session_state.active_cc_tpl.startswith("http") or os.path.exists(st.session_state.active_cc_tpl):
+                st.success("✅ C.C Template Ready")
+            else:
+                st.error("❌ C.C Template Missing")
         else:
-            cc_ok = os.path.exists(CC_ADVANCE_TEMPLATE)
-            sd_ok = os.path.exists(SD_TEMPLATE)
+            # OTHER type needs both
+            options_cc = ["Default (CCTemplate.docx)"] + gh_docx
+            options_sd = ["Default (SDTemplate.docx)"] + gh_docx
 
-            if cc_ok:
-                st.success("✅ CCTemplate Loaded (for Advance Payment)")
-            else:
-                st.error(f"❌ {CC_ADVANCE_TEMPLATE} Missing!")
+            sel_cc = st.selectbox("C.C Template (Advance)", options_cc, disabled=st.session_state.locked)
+            sel_sd = st.selectbox("SD Template", options_sd, disabled=st.session_state.locked)
 
-            if sd_ok:
-                st.success("✅ SDTemplate Loaded (for ASD / SD & MSD / Processing Fee)")
+            if sel_cc == "Default (CCTemplate.docx)":
+                st.session_state.active_cc_tpl = CC_ADVANCE_TEMPLATE
             else:
-                st.error(f"❌ {SD_TEMPLATE} Missing!")
+                st.session_state.active_cc_tpl = next(f["download_url"] for f in gh_files if f["name"] == sel_cc)
+
+            if sel_sd == "Default (SDTemplate.docx)":
+                st.session_state.active_sd_tpl = SD_TEMPLATE
+            else:
+                st.session_state.active_sd_tpl = next(f["download_url"] for f in gh_files if f["name"] == sel_sd)
+
+            if st.session_state.active_cc_tpl.startswith("http") or os.path.exists(st.session_state.active_cc_tpl):
+                st.success("✅ C.C Template Ready")
+            if st.session_state.active_sd_tpl.startswith("http") or os.path.exists(st.session_state.active_sd_tpl):
+                st.success("✅ SD Template Ready")
+
+        st.divider()
 
         data_file = st.file_uploader("Upload Master Data (.xlsx)", type=["xlsx"])
 
@@ -119,10 +145,6 @@ def show_challan_generator():
             if st.button("Confirm Setup", type="primary"):
                 if not s_challan or not s_challan.isdigit():
                     st.error("Enter a valid Numeric Challan Number.")
-                elif challan_type == "C. C" and not template_bytes:
-                    st.error("C.C template not loaded.")
-                elif challan_type == "OTHER" and (not os.path.exists(CC_ADVANCE_TEMPLATE) or not os.path.exists(SD_TEMPLATE)):
-                    st.error("Load both CCTemplate.docx and SDTemplate.docx.")
                 elif not data_file:
                     st.error("Upload Master Data.")
                 else:
@@ -148,437 +170,316 @@ def show_challan_generator():
         start_no_str = str(st.session_state.start_no).zfill(4)
 
         if st.session_state.challan_type == "C. C":
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("First Challan", start_no_str)
-            m2.metric("Current No.", next_no_str)
-            m3.metric("Date", st.session_state.formatted_pdate)
-            m4.metric("Entered", curr_count)
-        else:
-            m1, m2 = st.columns(2)
-            m1.metric("Current No.", next_no_str)
-            m2.metric("Date", st.session_state.formatted_pdate)
+            st.title("📄 C.C Challan Generator")
+            st.info(f"Generating from Challan No: **{start_no_str}** | Date: **{st.session_state.formatted_pdate}**")
 
-        try:
-            df = pd.read_excel(data_file, sheet_name="BILL")
-        except Exception:
-            st.error("Sheet 'BILL' not found.")
-            st.stop()
+            df = pd.read_excel(data_file)
+            search_term = st.text_input("Search Consumer (Name or Number)")
 
-        st.divider()
-
-        has_active_instruments = len(st.session_state.temp_instruments) > 0
-        row = None
-        total_amt = None
-        display_month_text = ""
-        purpose_value = ""
-        description_value = ""
-        breakdown_value = ""
-        tag_value = ""
-        account_value = ""
-
-        if st.session_state.challan_type == "C. C":
-            col_t1, _ = st.columns([0.2, 0.8])
-            with col_t1:
-                toggle_label = "Single Month Mode" if not st.session_state.is_period else "Period Mode"
-                if st.button(toggle_label, disabled=has_active_instruments):
-                    st.session_state.is_period = not st.session_state.is_period
-                    st.rerun()
-
-            if not st.session_state.is_period:
-                c1, c2 = st.columns(2)
-                with c1:
-                    sel_month = st.selectbox(
-                        "Select Month", options=MONTH_LIST, disabled=has_active_instruments
-                    )
-                with c2:
-                    sel_year = st.selectbox(
-                        "Select Year", options=YEAR_OPTIONS, index=0, disabled=has_active_instruments
-                    )
-
-                display_month_text = f"{sel_month} - {sel_year}"
-                target_months = [(sel_month, sel_year)]
+            if search_term:
+                filtered_df = df[
+                    df["Name"].str.contains(search_term, case=False, na=False) |
+                    df["Consumer Number"].astype(str).str.contains(search_term, na=False)
+                ]
             else:
-                c1, c2, c3, c4 = st.columns(4)
-                with c1:
-                    f_month = st.selectbox("From Month", options=MONTH_LIST, disabled=has_active_instruments)
-                with c2:
-                    f_year = st.selectbox(
-                        "From Year", options=YEAR_OPTIONS, index=0, disabled=has_active_instruments
-                    )
-                with c3:
-                    t_month = st.selectbox("To Month", options=MONTH_LIST, disabled=has_active_instruments)
-                with c4:
-                    t_year = st.selectbox(
-                        "To Year", options=YEAR_OPTIONS, index=0, disabled=has_active_instruments
-                    )
+                filtered_df = df.head(10)
 
-                start_date = datetime(f_year, MONTH_LIST.index(f_month) + 1, 1)
-                end_date = datetime(t_year, MONTH_LIST.index(t_month) + 1, 1)
+            if not filtered_df.empty:
+                selected_consumer = st.selectbox("Select Consumer", filtered_df["Name"] + " - " + filtered_df["Consumer Number"].astype(str))
+                row = filtered_df[filtered_df["Name"] + " - " + filtered_df["Consumer Number"].astype(str) == selected_consumer].iloc[0]
 
-                target_months = []
+                st.write("---")
+                st.write(f"### Consumer: **{row['Name']}**")
 
-                if start_date <= end_date:
-                    curr = start_date
-                    while curr <= end_date:
-                        target_months.append((MONTH_LIST[curr.month - 1], curr.year))
-                        curr = (
-                            datetime(curr.year + 1, 1, 1)
-                            if curr.month == 12
-                            else datetime(curr.year, curr.month + 1, 1)
-                        )
-                    display_month_text = format_period_month_text(target_months)
+                p1, p2 = st.columns(2)
+                with p1:
+                    is_period = st.checkbox("Multiple Months (Period)", value=st.session_state.is_period)
+                    st.session_state.is_period = is_period
+
+                if is_period:
+                    st.write("**Select Period**")
+                    pcol1, pcol2 = st.columns(2)
+                    with pcol1:
+                        start_m = st.selectbox("From Month", MONTH_LIST, index=0)
+                        start_y = st.selectbox("From Year", YEAR_OPTIONS, index=1)
+                    with pcol2:
+                        end_m = st.selectbox("To Month", MONTH_LIST, index=0)
+                        end_y = st.selectbox("To Year", YEAR_OPTIONS, index=1)
+
+                    # Logic to generate display text
+                    display_month_text = f"{start_m} {start_y} to {end_m} {end_y}"
                 else:
-                    st.error("'From' date must be before 'To' date.")
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        target_m = st.selectbox("Month", MONTH_LIST, index=date.today().month - 1)
+                    with c2:
+                        target_y = st.selectbox("Year", YEAR_OPTIONS, index=1)
+                    display_month_text = f"{target_m} {target_y}"
 
-                if not target_months:
-                    st.warning("Selected Month-Year range is empty.")
+                total_amt = st.number_input("Amount (₹)", min_value=0, step=1)
 
-            search_num = st.text_input(
-                "Enter Consumer Number",
-                max_chars=3,
-                key=f"consumer_{st.session_state.consumer_key}",
-                disabled=has_active_instruments,
-            )
+                st.write("---")
+                # Bank & Payment
+                bank_name = st.session_state.selected_bank
+                b1, b2 = st.columns([3, 1], vertical_alignment="bottom")
+                with b1:
+                    bank_name = st.text_input("Bank Name", value=bank_name)
+                    st.session_state.selected_bank = bank_name
+                with b2:
+                    has_active_instruments = len(st.session_state.temp_instruments) > 0
+                    if st.button("🔍 Select", disabled=has_active_instruments, use_container_width=True):
+                        bank_selection_dialog()
 
-            if search_num and not re.match(r"^\d*$", search_num):
-                st.error("Consumer Number must contain numbers only.")
-            elif search_num and len(search_num) == 3 and re.match(r"^\d{3}$", search_num):
-                result = df[df["Consumer Number"].astype(str).str.zfill(3) == search_num]
+                with st.expander("💳 Add Payment Details", expanded=True):
+                    restricted_mode = None
+                    if st.session_state.temp_instruments:
+                        restricted_mode = st.session_state.temp_instruments[0]["type"]
 
-                if result.empty:
-                    st.error("Consumer not found in Master Data.")
-                else:
-                    row = result.iloc[0]
-                    total_amt = 0
-                    month_found = False
+                    with st.form("instrument_form", clear_on_submit=True):
+                        f1, f2, f3 = st.columns(3)
+                        with f1:
+                            if restricted_mode:
+                                st.markdown("🔒 Locked")
+                                st.info(f"Mode: {restricted_mode}")
+                                i_type = restricted_mode
+                            else:
+                                i_type = st.selectbox("Type", ["Cheque", "Demand Draft"])
+                        with f2:
+                            i_no = st.text_input("No.", max_chars=6)
+                        with f3:
+                            i_date = st.date_input("Date")
 
-                    for m, y in target_months:
-                        t_abbr = f"{MONTH_ABBR[MONTH_LIST.index(m)]}-{str(y)[2:]}"
-                        t_col = next(
-                            (
-                                col
-                                for col in df.columns
-                                if str(col).strip() == t_abbr
-                                or (
-                                    isinstance(col, (datetime, pd.Timestamp))
-                                    and col.month == MONTH_LIST.index(m) + 1
-                                    and col.year == y
+                        if st.form_submit_button("➕ Add Payment"):
+                            if bank_name and re.match(r"^\d{6}$", i_no):
+                                st.session_state.temp_instruments.append(
+                                    {
+                                        "bank": bank_name,
+                                        "type": i_type,
+                                        "no": i_no,
+                                        "date": i_date.strftime("%d.%m.%Y"),
+                                    }
                                 )
-                            ),
-                            None,
-                        )
+                                st.rerun()
+                            else:
+                                st.error("Check Bank Name and Cheque/DD No.")
 
-                        if t_col is not None:
-                            month_found = True
-                            total_amt += row[t_col] if not pd.isna(row[t_col]) else 0
+                    for idx, inst in enumerate(st.session_state.temp_instruments):
+                        cols = st.columns([2.5, 2, 2, 2, 0.5])
+                        cols[0].write(f"🏦 {inst['bank']}")
+                        cols[1].write(f"📄 {inst['type']}")
+                        cols[2].write(f"🔢 {inst['no']}")
+                        cols[3].write(f"📅 {inst['date']}")
+                        if cols[4].button("🗑️", key=f"del_tmp_{idx}"):
+                            st.session_state.temp_instruments.pop(idx)
+                            st.rerun()
 
-                    if not month_found:
-                        st.error("Selected Month-Year column not found in Master Data.")
-                    elif total_amt <= 0:
-                        st.warning("Amount is zero for selected Month-Year.")
+                if st.button("🚀 Add to Batch", type="primary", key="add_batch_cc"):
+                    if not st.session_state.temp_instruments:
+                        st.error("Add at least One Payment Details.")
+                    elif not bank_name:
+                        st.error("Bank Name is required.")
+                    elif total_amt == 0:
+                        st.error("Amount must be greater than 0.")
                     else:
-                        purpose_value = "C. C. Charges"
-                        description_value = display_month_text
-                        st.success(
-                            f"**Found:** {row['Name']} | **Total Amt:** ₹{format_indian_currency(total_amt)}"
-                        )
+                        receipt = {
+                            "id": str(uuid.uuid4()),
+                            "challan": next_no_str,
+                            "pdate": st.session_state.formatted_pdate,
+                            "name": row["Name"],
+                            "num": row["Consumer Number"],
+                            "month": display_month_text,
+                            "amount": format_indian_currency(total_amt),
+                            "words": amount_words(total_amt),
+                            "pay_type": st.session_state.temp_instruments[0]["type"],
+                            "pay_no": ", ".join([i["no"] for i in st.session_state.temp_instruments]),
+                            "bank": bank_name,
+                            "date": ", ".join(list(set([i["date"] for i in st.session_state.temp_instruments]))),
+                        }
+                        st.session_state.all_receipts.append(receipt)
+                        st.session_state.temp_instruments = []
+                        st.session_state.selected_bank = ""
+                        st.session_state.is_period = False
+                        st.rerun()
+            else:
+                st.warning("No consumers found.")
 
         else:
-            purpose_locked = bool(st.session_state.batch_purpose)
-            if purpose_locked:
-                selected_other_purpose = st.selectbox(
-                    "Purpose",
-                    [st.session_state.batch_purpose],
-                    index=0,
-                    disabled=True,
-                    key=f"other_purpose_locked_{st.session_state.other_form_key}",
-                )
-            else:
-                selected_other_purpose = st.selectbox(
-                    "Purpose",
-                    OTHER_PURPOSES,
-                    disabled=has_active_instruments,
-                    key=f"other_purpose_{st.session_state.other_form_key}",
-                )
-            purpose_value = selected_other_purpose
-            description_value = ""
-            desc_value_4d = ""
-            breakdown_value = ""
-            require_kva_value = False
-            is_new_consumer = False
-            new_consumer_name = ""
-            tag_value = ""
-            account_value = ""
+            st.title("✏️ OTHER Challan Generator")
+            st.info(f"Generating from Challan No: **{start_no_str}** | Date: **{st.session_state.formatted_pdate}**")
 
-            if selected_other_purpose == "Advance Payment":
-                c1, c2 = st.columns(2)
-                with c1:
-                    adv_month = st.selectbox("Month", MONTH_LIST, disabled=has_active_instruments, key=f"adv_month_{st.session_state.other_form_key}")
-                with c2:
-                    adv_year = st.selectbox(
-                        "Year", YEAR_OPTIONS, index=0, disabled=has_active_instruments, key=f"adv_year_{st.session_state.other_form_key}"
-                    )
-                purpose_value = "Advance Payment"
-                description_value = f"{adv_month} - {adv_year}"
-                other_amount = st.text_input("Amount", value="", disabled=has_active_instruments, key=f"adv_amt_{st.session_state.other_form_key}")
-                if other_amount and re.match(r"^\d+$", other_amount):
-                    total_amt = int(other_amount)
-                elif other_amount:
-                    total_amt = None
-                    st.error("Amount must be a valid whole number.")
-                else:
-                    total_amt = None
+            # Logic for OTHER challan types (similar to C.C but with purpose selection)
+            df = pd.read_excel(data_file)
 
-            elif selected_other_purpose == "Advance Security Deposit (ASD)":
-                asd_desc_options = [
-                    "Review of ASD for April - 2023 to March - 2024",
-                    "Review of ASD for April - 2024 to March - 2025",
-                    "Review of ASD for April - 2025 to March - 2026",
-                ]
-                description_value = st.selectbox(
-                    "Description",
-                    asd_desc_options,
-                    index=1,
-                    key=f"asd_desc_{st.session_state.other_form_key}",
-                )
-                purpose_value = description_value
-                other_amount = st.text_input("Amount", value="", disabled=has_active_instruments, key=f"asd_amt_{st.session_state.other_form_key}")
-                if other_amount and re.match(r"^\d+$", other_amount):
-                    total_amt = int(other_amount)
-                elif other_amount:
-                    total_amt = None
-                    st.error("Amount must be a valid whole number.")
-                else:
-                    total_amt = None
-                tag_value = "SD"
-                account_value = "8336 – CIVIL DEPOSITS – 101 – SECURITY DEPOSITS"
+            with st.container(border=True, key=f"consumer_box_{st.session_state.consumer_key}"):
+                sc1, sc2 = st.columns([2, 1])
+                with sc1:
+                    search_term = st.text_input("Search Consumer", key=f"search_{st.session_state.consumer_key}")
+                with sc2:
+                    is_new_consumer = st.checkbox("New Consumer", key=f"new_c_{st.session_state.consumer_key}")
 
-            elif selected_other_purpose == "Security Deposit and Meter Security Deposit (SD and MSD)":
-                sd_desc_options = [
-                    "SD and MSD - Extension of HT power supply service for CMD of",
-                    "Custom...",
-                ]
-                c1, c2 = st.columns([0.75, 0.25])
-                with c1:
-                    sd_desc_choice = st.selectbox("Description", sd_desc_options, key=f"sd_desc_choice_{st.session_state.other_form_key}")
-                with c2:
-                    desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, key=f"sd_value_{st.session_state.other_form_key}")
-
-                if sd_desc_choice == "Custom...":
-                    base_desc = st.text_input(
-                        "Custom Description",
-                        placeholder="Enter SD and MSD description",
-                        key=f"sd_custom_desc_{st.session_state.other_form_key}",
-                    )
-                    description_value = base_desc.strip()
-                else:
-                    require_kva_value = True
-                    if desc_value_4d and not re.match(r"^\d{1,4}$", desc_value_4d):
-                        st.error("Value must be numeric and maximum 4 digits.")
-                    description_value = f"{sd_desc_choice} {desc_value_4d} KVA".strip()
-
-                purpose_value = description_value
-                tag_value = "SD"
-                account_value = "8336 – CIVIL DEPOSITS – 101 – SECURITY DEPOSITS"
-
-                s1, s2 = st.columns(2)
-                with s1:
-                    sd_amount_str = st.text_input("SD Amount", value="", key=f"sd_amt_{st.session_state.other_form_key}")
-                with s2:
-                    msd_amount_str = st.text_input("MSD Amount", value="", key=f"msd_amt_{st.session_state.other_form_key}")
-
-                if sd_amount_str and msd_amount_str and re.match(r"^\d+$", sd_amount_str) and re.match(r"^\d+$", msd_amount_str):
-                    sd_amount = int(sd_amount_str)
-                    msd_amount = int(msd_amount_str)
-                    total_amt = sd_amount + msd_amount
-                    breakdown_value = (
-                        f"[S.D     : {format_indian_currency(sd_amount)}]\n"
-                        f"[M.S.D : {format_indian_currency(msd_amount)}]"
-                    )
-                else:
-                    total_amt = None
-                    if sd_amount_str or msd_amount_str:
-                        st.error("Enter valid whole numbers for SD Amount and MSD Amount.")
-
-            else:
-                proc_desc_options = [
-                    "registration cum-processing fees for the extension of HT power supply of CMD of",
-                    "Custom...",
-                ]
-                c1, c2 = st.columns([0.75, 0.25])
-                with c1:
-                    proc_desc_choice = st.selectbox("Description", proc_desc_options, key=f"proc_desc_choice_{st.session_state.other_form_key}")
-                with c2:
-                    desc_value_4d = st.text_input("Value (max 4 digits)", max_chars=4, key=f"proc_value_{st.session_state.other_form_key}")
-
-                if proc_desc_choice == "Custom...":
-                    description_value = st.text_input(
-                        "Custom Description",
-                        placeholder="Enter processing fee description",
-                        key=f"proc_custom_desc_{st.session_state.other_form_key}",
-                    ).strip()
-                else:
-                    require_kva_value = True
-                    if desc_value_4d and not re.match(r"^\d{1,4}$", desc_value_4d):
-                        st.error("Value must be numeric and maximum 4 digits.")
-                    description_value = f"{proc_desc_choice} {desc_value_4d} KVA".strip()
-
-                purpose_value = description_value
-                tag_value = "CCC/PF"
-                account_value = "0801 – Power 05 – Transmission and Distribution (101) Sale of Power"
-                total_amt = 20000
-                st.info("Processing Fee amount is fixed at ₹20,000")
-
-            if selected_other_purpose in [
-                "Security Deposit and Meter Security Deposit (SD and MSD)",
-                "Processing Fee",
-            ]:
-                is_new_consumer = st.checkbox("New Consumer", value=True, key=f"new_consumer_{st.session_state.other_form_key}")
-
-            if is_new_consumer:
-                new_consumer_name = st.text_input(
-                    "Consumer Name",
-                    placeholder="Enter new consumer name",
-                    key=f"new_consumer_name_{st.session_state.other_form_key}",
-                )
-                st.text_input(
-                    "Enter Consumer Number",
-                    value="NEW",
-                    disabled=True,
-                    key=f"consumer_new_{st.session_state.consumer_key}",
-                )
-                row = {
-                    "Name": new_consumer_name.strip() if new_consumer_name.strip() else "NEW CONSUMER",
-                    "Consumer Number": "NEW",
-                }
-            else:
-                search_num = st.text_input(
-                    "Enter Consumer Number",
-                    max_chars=3,
-                    key=f"consumer_{st.session_state.consumer_key}",
-                )
-                if search_num and not re.match(r"^\d*$", search_num):
-                    st.error("Consumer Number must contain numbers only.")
-                elif search_num and len(search_num) == 3 and re.match(r"^\d{3}$", search_num):
-                    result = df[df["Consumer Number"].astype(str).str.zfill(3) == search_num]
-                    if result.empty:
-                        st.error("Consumer not found in Master Data.")
-                    else:
-                        row = result.iloc[0]
-
-            if row is not None:
+                row = None
                 if is_new_consumer:
-                    st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
+                    new_consumer_name = st.text_input("Consumer Name")
+                    if new_consumer_name:
+                        row = {"Name": new_consumer_name, "Consumer Number": "NEW"}
                 else:
-                    st.success(f"**Found:** {row['Name']} | **Purpose:** {purpose_value}")
-
-        if row is not None and total_amt is not None:
-            b_col1, b_col2 = st.columns([0.85, 0.15], vertical_alignment="bottom")
-            with b_col1:
-                bank_name = st.text_input(
-                    "Bank Name", value=st.session_state.selected_bank, disabled=has_active_instruments
-                )
-            with b_col2:
-                # Add a bit of top margin to align with the text input if needed,
-                # but vertical_alignment="bottom" usually handles it.
-                if st.button("🔍 Select", disabled=has_active_instruments, use_container_width=True):
-                    bank_selection_dialog()
-
-            with st.expander("💳 Add Payment Details", expanded=True):
-                restricted_mode = None
-                if st.session_state.temp_instruments:
-                    restricted_mode = st.session_state.temp_instruments[0]["type"]
-
-                with st.form("instrument_form", clear_on_submit=True):
-                    f1, f2, f3 = st.columns(3)
-                    with f1:
-                        if restricted_mode:
-                            st.markdown("🔒 Locked")
-                            st.info(f"Mode: {restricted_mode}")
-                            i_type = restricted_mode
-                        else:
-                            i_type = st.selectbox("Type", ["Cheque", "Demand Draft"])
-                    with f2:
-                        i_no = st.text_input("No.", max_chars=6)
-                    with f3:
-                        i_date = st.date_input("Date")
-
-                    if st.form_submit_button("➕ Add Payment"):
-                        if bank_name and re.match(r"^\d{6}$", i_no):
-                            st.session_state.temp_instruments.append(
-                                {
-                                    "bank": bank_name,
-                                    "type": i_type,
-                                    "no": i_no,
-                                    "date": i_date.strftime("%d.%m.%Y"),
-                                }
-                            )
-                            st.rerun()
-                        else:
-                            st.error("Check Bank Name and Cheque/DD No.")
-
-                for idx, inst in enumerate(st.session_state.temp_instruments):
-                    cols = st.columns([2.5, 2, 2, 2, 0.5])
-                    cols[0].write(f"🏦 {inst['bank']}")
-                    cols[1].write(f"📄 {inst['type']}")
-                    cols[2].write(f"🔢 {inst['no']}")
-                    cols[3].write(f"📅 {inst['date']}")
-                    if cols[4].button("🗑️", key=f"del_tmp_{idx}"):
-                        st.session_state.temp_instruments.pop(idx)
-                        st.rerun()
-
-            if st.button("🚀 Add to Batch", type="primary"):
-                if not st.session_state.temp_instruments:
-                    st.error("Add at least One Payment Details.")
-                elif not bank_name:
-                    st.error("Bank Name is required.")
-                elif st.session_state.challan_type == "OTHER" and not description_value.strip() and selected_other_purpose != "Advance Payment":
-                    st.error("Description is required for selected purpose.")
-                elif st.session_state.challan_type == "OTHER" and require_kva_value and not re.match(r"^\d{1,4}$", desc_value_4d):
-                    st.error("Please enter a valid 1 to 4 digit value.")
-                elif st.session_state.challan_type == "OTHER" and is_new_consumer and not new_consumer_name.strip():
-                    st.error("Please enter Consumer Name for New Consumer.")
-                elif st.session_state.challan_type == "OTHER" and selected_other_purpose not in [
-                    "Processing Fee",
-                    "Security Deposit and Meter Security Deposit (SD and MSD)",
-                ] and total_amt is None:
-                    st.error("Please enter a valid Amount.")
-                elif st.session_state.challan_type == "OTHER" and selected_other_purpose == "Security Deposit and Meter Security Deposit (SD and MSD)" and total_amt is None:
-                    st.error("Please enter valid SD Amount and MSD Amount.")
-                else:
-                    receipt = {
-                        "id": str(uuid.uuid4()),
-                        "challan": next_no_str,
-                        "pdate": st.session_state.formatted_pdate,
-                        "name": row["Name"],
-                        "num": row["Consumer Number"],
-                        "purpose": purpose_value,
-                        "selected_purpose": selected_other_purpose if st.session_state.challan_type == "OTHER" else "C. C",
-                        "description": description_value,
-                        "tag": tag_value,
-                        "account": account_value,
-                        "breakdown": breakdown_value,
-                        "amount": format_indian_currency(total_amt),
-                        "words": amount_words(total_amt),
-                        "pay_type": st.session_state.temp_instruments[0]["type"],
-                        "pay_no": ", ".join([i["no"] for i in st.session_state.temp_instruments]),
-                        "bank": bank_name,
-                        "date": ", ".join(list(set([i["date"] for i in st.session_state.temp_instruments]))),
-                    }
-                    if st.session_state.challan_type == "C. C":
-                        receipt["month"] = display_month_text
+                    if search_term:
+                        filtered_df = df[
+                            df["Name"].str.contains(search_term, case=False, na=False) |
+                            df["Consumer Number"].astype(str).str.contains(search_term, na=False)
+                        ]
                     else:
-                        receipt["month"] = description_value
-                    st.session_state.all_receipts.append(receipt)
-                    st.session_state.temp_instruments = []
-                    st.session_state.selected_bank = ""
-                    st.session_state.is_period = False
-                    if st.session_state.challan_type == "OTHER" and not st.session_state.batch_purpose:
-                        st.session_state.batch_purpose = selected_other_purpose
-                    if st.session_state.challan_type == "OTHER":
-                        st.session_state.other_form_key += 1
-                    st.session_state.consumer_key += 1
-                    st.rerun()
+                        filtered_df = df.head(5)
+
+                    if not filtered_df.empty:
+                        sel_text = st.selectbox("Select Consumer", filtered_df["Name"] + " - " + filtered_df["Consumer Number"].astype(str))
+                        row = filtered_df[filtered_df["Name"] + " - " + filtered_df["Consumer Number"].astype(str) == sel_text].iloc[0]
+                    else:
+                        st.warning("No consumers found.")
+
+            if row:
+                with st.container(border=True, key=f"purpose_box_{st.session_state.other_form_key}"):
+                    st.write("#### Purpose & Description")
+
+                    # If batch has started, lock the purpose
+                    default_purpose = st.session_state.batch_purpose if st.session_state.batch_purpose else OTHER_PURPOSES[0]
+                    selected_other_purpose = st.selectbox("Select Purpose", OTHER_PURPOSES, index=OTHER_PURPOSES.index(default_purpose), disabled=bool(st.session_state.batch_purpose))
+
+                    description_value = ""
+                    purpose_value = selected_other_purpose
+                    tag_value = ""
+                    account_value = ""
+                    breakdown_value = ""
+                    total_amt = None
+
+                    require_kva_value = selected_other_purpose in ["Advance Security Deposit (ASD)", "Security Deposit and Meter Security Deposit (SD and MSD)", "Processing Fee"]
+
+                    o1, o2 = st.columns(2)
+                    with o1:
+                        if selected_other_purpose == "Advance Payment":
+                            target_m = st.selectbox("Month", MONTH_LIST, index=date.today().month - 1)
+                            target_y = st.selectbox("Year", YEAR_OPTIONS, index=1)
+                            description_value = f"{target_m} {target_y}"
+                            total_amt = st.number_input("Amount (₹)", min_value=0, step=1)
+
+                        elif selected_other_purpose == "Advance Security Deposit (ASD)":
+                            kva_val = st.text_input("KVA Value (1-4 digits)", max_chars=4)
+                            desc_value_4d = kva_val.zfill(4) if kva_val else ""
+                            description_value = f"{desc_value_4d} ASD"
+                            total_amt = st.number_input("Amount (₹)", min_value=0, step=1)
+                            purpose_value = "A. S. D"
+
+                        elif selected_other_purpose == "Processing Fee":
+                            kva_val = st.text_input("KVA Value (1-4 digits)", max_chars=4)
+                            desc_value_4d = kva_val.zfill(4) if kva_val else ""
+                            description_value = f"{desc_value_4d} P. F"
+                            total_amt = st.number_input("Amount (₹)", min_value=0, step=1)
+                            purpose_value = "P. F"
+                            tag_value = " (REGISTRATION CUM PROCESSING FEE)"
+                            account_value = "9/831"
+
+                        elif selected_other_purpose == "Security Deposit and Meter Security Deposit (SD and MSD)":
+                            kva_val = st.text_input("KVA Value (1-4 digits)", max_chars=4)
+                            desc_value_4d = kva_val.zfill(4) if kva_val else ""
+                            description_value = f"{desc_value_4d} SD & MSD"
+                            purpose_value = "S. D & M. S. D"
+                            sd_amt = st.number_input("SD Amount", min_value=0)
+                            msd_amt = st.number_input("MSD Amount", min_value=0)
+                            if sd_amt or msd_amt:
+                                total_amt = sd_amt + msd_amt
+                                breakdown_value = f"SD: {format_indian_currency(sd_amt)}, MSD: {format_indian_currency(msd_amt)}"
+
+                # Bank & Payment (Same as C.C)
+                bank_name = st.session_state.selected_bank
+                b1, b2 = st.columns([3, 1], vertical_alignment="bottom")
+                with b1:
+                    bank_name = st.text_input("Bank Name", value=bank_name)
+                    st.session_state.selected_bank = bank_name
+                with b2:
+                    has_active_instruments = len(st.session_state.temp_instruments) > 0
+                    if st.button("🔍 Select", disabled=has_active_instruments, use_container_width=True):
+                        bank_selection_dialog()
+
+                with st.expander("💳 Add Payment Details", expanded=True):
+                    restricted_mode = None
+                    if st.session_state.temp_instruments:
+                        restricted_mode = st.session_state.temp_instruments[0]["type"]
+
+                    with st.form("instrument_form_other", clear_on_submit=True):
+                        f1, f2, f3 = st.columns(3)
+                        with f1:
+                            if restricted_mode:
+                                st.markdown("🔒 Locked")
+                                st.info(f"Mode: {restricted_mode}")
+                                i_type = restricted_mode
+                            else:
+                                i_type = st.selectbox("Type", ["Cheque", "Demand Draft"])
+                        with f2:
+                            i_no = st.text_input("No.", max_chars=6)
+                        with f3:
+                            i_date = st.date_input("Date")
+
+                        if st.form_submit_button("➕ Add Payment"):
+                            if bank_name and re.match(r"^\d{6}$", i_no):
+                                st.session_state.temp_instruments.append(
+                                    {
+                                        "bank": bank_name,
+                                        "type": i_type,
+                                        "no": i_no,
+                                        "date": i_date.strftime("%d.%m.%Y"),
+                                    }
+                                )
+                                st.rerun()
+                            else:
+                                st.error("Check Bank Name and Cheque/DD No.")
+
+                    for idx, inst in enumerate(st.session_state.temp_instruments):
+                        cols = st.columns([2.5, 2, 2, 2, 0.5])
+                        cols[0].write(f"🏦 {inst['bank']}")
+                        cols[1].write(f"📄 {inst['type']}")
+                        cols[2].write(f"🔢 {inst['no']}")
+                        cols[3].write(f"📅 {inst['date']}")
+                        if cols[4].button("🗑️", key=f"del_tmp_other_{idx}"):
+                            st.session_state.temp_instruments.pop(idx)
+                            st.rerun()
+
+                if st.button("🚀 Add to Batch", type="primary", key="add_batch_other"):
+                    if not st.session_state.temp_instruments:
+                        st.error("Add at least One Payment Details.")
+                    elif not bank_name:
+                        st.error("Bank Name is required.")
+                    elif st.session_state.challan_type == "OTHER" and not description_value.strip() and selected_other_purpose != "Advance Payment":
+                        st.error("Description is required for selected purpose.")
+                    elif total_amt is None or total_amt == 0:
+                        st.error("Please enter a valid Amount.")
+                    else:
+                        receipt = {
+                            "id": str(uuid.uuid4()),
+                            "challan": next_no_str,
+                            "pdate": st.session_state.formatted_pdate,
+                            "name": row["Name"],
+                            "num": row["Consumer Number"],
+                            "purpose": purpose_value,
+                            "selected_purpose": selected_other_purpose,
+                            "description": description_value,
+                            "tag": tag_value,
+                            "account": account_value,
+                            "breakdown": breakdown_value,
+                            "amount": format_indian_currency(total_amt),
+                            "words": amount_words(total_amt),
+                            "pay_type": st.session_state.temp_instruments[0]["type"],
+                            "pay_no": ", ".join([i["no"] for i in st.session_state.temp_instruments]),
+                            "bank": bank_name,
+                            "date": ", ".join(list(set([i["date"] for i in st.session_state.temp_instruments]))),
+                            "month": description_value
+                        }
+                        st.session_state.all_receipts.append(receipt)
+                        st.session_state.temp_instruments = []
+                        st.session_state.selected_bank = ""
+                        st.session_state.is_period = False
+                        if not st.session_state.batch_purpose:
+                            st.session_state.batch_purpose = selected_other_purpose
+                        st.rerun()
 
         if st.session_state.all_receipts:
             st.divider()
@@ -621,7 +522,6 @@ def show_challan_generator():
                                     st.session_state.all_receipts[j]["challan"] = str(current_val - 1).zfill(4)
                                 if not st.session_state.all_receipts:
                                     st.session_state.batch_purpose = ""
-                                    st.session_state.other_form_key += 1
                                 st.rerun()
 
                 st.write("---")
@@ -637,25 +537,34 @@ def show_challan_generator():
             st.write("---")
 
             if st.button("🚀 Finalize Word File", type="primary"):
-                if st.session_state.challan_type == "C. C":
-                    with open(CC_ADVANCE_TEMPLATE, "rb") as f:
-                        doc = DocxTemplate(io.BytesIO(f.read()))
-                else:
-                    first_selected_purpose = st.session_state.all_receipts[0].get("selected_purpose", "")
-                    tpl = CC_ADVANCE_TEMPLATE if first_selected_purpose == "Advance Payment" else SD_TEMPLATE
-                    if not os.path.exists(tpl):
-                        st.error(f"Template missing: {tpl}")
-                        st.stop()
-                    with open(tpl, "rb") as f:
-                        doc = DocxTemplate(io.BytesIO(f.read()))
+                # Use dynamic templates
+                try:
+                    cc_tpl_path = st.session_state.active_cc_tpl
+                    sd_tpl_path = st.session_state.active_sd_tpl
 
-                safe_receipts = [SafeReceipt(r) for r in st.session_state.all_receipts]
-                doc.render({"receipts": safe_receipts})
-                output = io.BytesIO()
-                doc.save(output)
-                output.seek(0)
-                st.download_button(
-                    "📥 Download",
-                    output.getvalue(),
-                    file_name=f"Challans_{date.today()}.docx",
-                )
+                    if st.session_state.challan_type == "C. C":
+                        active_path = cc_tpl_path
+                    else:
+                        first_selected_purpose = st.session_state.all_receipts[0].get("selected_purpose", "")
+                        active_path = cc_tpl_path if first_selected_purpose == "Advance Payment" else sd_tpl_path
+
+                    if active_path.startswith("http"):
+                        resp = requests.get(active_path)
+                        tpl_io = io.BytesIO(resp.content)
+                    else:
+                        with open(active_path, "rb") as f:
+                            tpl_io = io.BytesIO(f.read())
+
+                    doc = DocxTemplate(tpl_io)
+                    safe_receipts = [SafeReceipt(r) for r in st.session_state.all_receipts]
+                    doc.render({"receipts": safe_receipts})
+                    output = io.BytesIO()
+                    doc.save(output)
+                    output.seek(0)
+                    st.download_button(
+                        "📥 Download",
+                        output.getvalue(),
+                        file_name=f"Challans_{date.today()}.docx",
+                    )
+                except Exception as e:
+                    st.error(f"Error generating file: {e}")
