@@ -20,6 +20,53 @@ def navigate_to(page):
 # --- PAGE RENDERING ---
 
 if st.session_state.active_page == "Home":
+    st.markdown(r"""
+        <style>
+        .main-title {
+            text-align: center;
+            font-size: clamp(3rem, 10vw, 5rem) !important;
+            font-weight: 900 !important;
+            margin-top: 0.5rem !important;
+            margin-bottom: 2rem !important;
+            color: #1E3A8A !important;
+            letter-spacing: 2px !important;
+            text-transform: uppercase;
+        }
+        /* Dashboard Button Styling */
+        .stButton button {
+            height: 220px !important;
+            width: 100% !important;
+            max-width: 350px !important; /* Prevent huge buttons on wide screens */
+            margin: 0 auto !important;
+            display: flex !important;
+            border-radius: 10px !important;
+            border: 3px solid #E5E7EB !important;
+            background-color: #FFFFFF !important;
+            transition: all 0.3s ease !important;
+            padding: 20px !important;
+        }
+        .stButton button:hover {
+            border-color: #3B82F6 !important;
+            background-color: #F9FAFB !important;
+            transform: translateY(-5px) !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        }
+        .stButton button p {
+            font-size: 1.4rem !important;
+            font-weight: 800 !important;
+            line-height: 1.3 !important;
+            color: #111827 !important;
+            white-space: pre-wrap !important;
+            text-align: center !important;
+            word-wrap: break-word !important;
+        }
+        /* Center the button grid on very wide screens */
+        [data-testid="column"] {
+            display: flex !important;
+            justify-content: center !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
     st.markdown("""
 <style>
 
@@ -105,7 +152,7 @@ else:
             max-width: none !important;
             padding: 0.4rem 1rem !important;
             font-size: 1rem !important;
-            border-radius: 20px !important;
+            border-radius: 10px !important;
         }
         .stButton button p {
             font-size: 1rem !important;
@@ -119,7 +166,7 @@ else:
         /* Global styles for tool elements */
         [data-testid="stVerticalBlock"] > div { gap: 0.5rem !important; }
         .stMarkdown p { font-size: 14px !important; line-height: 1.6 !important; }
-        .instrument-row { background-color: #f9f9f9; padding: 5px; border-radius: 20px; margin-bottom: 2px; }
+        .instrument-row { background-color: #f9f9f9; padding: 5px; border-radius: 10px; margin-bottom: 2px; }
         [data-testid="stImage"] img { width: 65px !important; height: 65px !important; object-fit: contain !important; border-radius: 5px; border: 1px solid #eee; display: block; margin-left: auto; margin-right: auto; }
         </style>
     """, unsafe_allow_html=True)
