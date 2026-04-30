@@ -298,9 +298,9 @@ def show_challan_generator():
                     if not result.empty: row = result.iloc[0]
                     else: st.error("Not found.")
 
-            if row: st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
+            if row is not None: st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
 
-        if row and total_amt is not None:
+        if row is not None and total_amt is not None:
             # Bank & Payment Selection
             bank_name = st.session_state.selected_bank
             b1, b2 = st.columns([0.9, 0.1], vertical_alignment="bottom")
