@@ -309,6 +309,8 @@ def show_challan_generator():
         has_total_amount = isinstance(total_amt, numbers.Real) and not pd.isna(total_amt)
 
         if has_row_data and has_total_amount:
+
+        if has_row_data and has_total_amount:
             if row is not None: st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
 
         if row is not None and total_amt is not None:
