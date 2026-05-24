@@ -1,5 +1,4 @@
 import streamlit as st
-from challan_generator import show_challan_generator
 from recon_editor import show_recon_editor
 from receipt_generator import show_receipt_generator
 from bill_calculator import show_bill_calculator
@@ -137,6 +136,7 @@ else:
     st.write("---")
 
     if st.session_state.active_page == "Challan Generator":
+        from challan_generator import show_challan_generator
         show_challan_generator()
     elif st.session_state.active_page == "Recon Editor":
         show_recon_editor()
