@@ -71,18 +71,17 @@ if st.session_state.active_page == "Home":
 
     tools = [
         ("📝\nChallan Generator", "Challan Generator"),
-        ("🔄\nRecon Editor", "Recon Editor"),
+        ("🔄\nReconciliation Editor", "Recon Editor"),
         ("🧾\nReceipt Generator", "Receipt Generator"),
-        ("🧮\nBill Calculator", "Bill Calculator"),
-        ("✏️\nBill Corrector", "Bill Corrector"),
+        ("🧮\nHT Bill Calculator", "Bill Calculator"),
+        ("✏️\nHT Bill corrector", "Bill Corrector"),
         ("📁\nFile Manager", "File Manager"),
-        ("🗂️\nFile & Text Holder", "File & Text Holder"),
-        ("☀️\nSolar Info", "Solar Info"),
+        ("☀️\nSolar Info and Open Access", "Solar Info"),
         ("📊\nAverage Calculator", "Average Calculator"),
-        ("⚙️\nSettings", "Settings"),
-        ("🏗️\nHT Dev", "HT Dev"),
-        ("🚀\nComing Soon", "Coming Soon"),
-        ("🚀\nComing Soon", "Coming Soon 2"),
+        ("🗂️\nFile & Text Holder", "File & Text Holder"),
+        ("⚙️\nHome Ground Settings", "Settings"),
+        ("🏗️\nHT in Development", "HT Dev"),
+        ("🚀\ncoming  Soon...", "Coming Soon"),
     ]
 
     for i in range(0, 12, 6):
@@ -93,7 +92,7 @@ if st.session_state.active_page == "Home":
                 label, page = tools[idx]
                 with cols[j]:
                     if st.button(label, key=f"dash_btn_{idx}"):
-                        if page not in {"Coming Soon", "Coming Soon 2", "Solar Info", "Average Calculator", "Settings", "HT Dev"}:
+                        if page not in {"Coming Soon", "Solar Info", "Average Calculator", "Settings", "HT Dev"}:
                             navigate_to(page)
                         else:
                             st.toast(f"🚀 {page} is coming soon!")
