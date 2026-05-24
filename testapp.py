@@ -16,6 +16,13 @@ st.set_page_config(page_title="HTS WORKS", layout="wide")
 if "active_page" not in st.session_state:
     st.session_state.active_page = "Home"
 
+PAGE_ALIASES = {
+    "Solar Info": "Solar Info and Open Access",
+    "Settings": "Home Ground Settings",
+    "HT Dev": "HTS Development",
+}
+st.session_state.active_page = PAGE_ALIASES.get(st.session_state.active_page, st.session_state.active_page)
+
 def navigate_to(page):
     st.session_state.active_page = page
     st.rerun()
@@ -96,10 +103,10 @@ if st.session_state.active_page == "Home":
                 label, page = tools[idx]
                 with cols[j]:
                     if st.button(label, key=f"dash_btn_{idx}"):
-                        if page not in {"Coming Soon"}:
-                            navigate_to(page)
-                        else:
+                        if page == "Coming Soon":
                             st.toast(f"🚀 {page} is coming soon!")
+                        else:
+                            navigate_to(page)
 
 else:
     st.markdown(r"""
@@ -162,3 +169,5 @@ else:
         show_home_ground_settings()
     elif st.session_state.active_page == "HTS Development":
         show_hts_development()
+    else:
+        st.warning(f"Page not configured yet: {st.session_state.active_page}")
