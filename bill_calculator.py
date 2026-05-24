@@ -51,9 +51,17 @@ def show_bill_calculator():
     st.title("🧮 Bill Collector")
     st.write("---")
 
+    if "bill_collector_ok" not in st.session_state:
+        st.session_state.bill_collector_ok = False
+    if "bill_collector_consumer" not in st.session_state:
+        st.session_state.bill_collector_consumer = None
+
+    locked = st.session_state.bill_collector_ok
+
     mode = st.sidebar.radio(
         "Calculator Type",
         ["Normal Bill Calculator", "BPSC Calculator"],
+        disabled=locked,
     )
 
     if mode == "BPSC Calculator":
@@ -91,7 +99,8 @@ def show_bill_calculator():
         return
 
     st.sidebar.markdown("### Consumer Lookup")
-    consumer_no = st.sidebar.text_input("Consumer No.", max_chars=3)
+    default_consumer = st.session_state.bill_collector_consumer or ""
+    consumer_no = st.sidebar.text_input("Consumer No.", max_chars=3, value=default_consumer, disabled=locked)
 
     if consumer_no and not re.match(r"^\d{0,3}$", consumer_no):
         st.sidebar.error("Consumer No. must contain digits only.")
@@ -122,16 +131,12 @@ def show_bill_calculator():
 
     st.sidebar.markdown("### Consumer Information")
     if info:
-        st.sidebar.success("✅ Consumer details fetched successfully.")
-        st.sidebar.markdown(
+        st.sidebar.success(
             f"""
-            <div style="border:1px solid #93c5fd; background:#eff6ff; border-radius:10px; padding:10px; margin-bottom:8px;">
-                <b>{info['consumer_no']}</b><br>
-                {info['name']}<br>
-                <b>{info['priv']} | {info['indl']}</b>
-            </div>
-            """,
-            unsafe_allow_html=True,
+            {info['consumer_no']}  
+            {info['name']}  
+            {info['priv']} | {info['indl']}
+            """
         )
         st.sidebar.markdown(
             f"""
@@ -146,14 +151,18 @@ def show_bill_calculator():
     else:
         st.sidebar.caption("Enter a valid 3-digit Consumer No. to fetch details.")
 
-    ok_disabled = not (is_valid_consumer and info is not None)
+    ok_disabled = locked or not (is_valid_consumer and info is not None)
     ok_clicked = st.sidebar.button("OK", type="primary", disabled=ok_disabled)
+    reset_clicked = st.sidebar.button("Reset", type="secondary", disabled=not locked)
 
     if ok_clicked:
         st.session_state.bill_collector_ok = True
         st.session_state.bill_collector_consumer = info["consumer_no"]
-    elif "bill_collector_ok" not in st.session_state:
+        st.rerun()
+    if reset_clicked:
         st.session_state.bill_collector_ok = False
+        st.session_state.bill_collector_consumer = None
+        st.rerun()
 
     if not st.session_state.bill_collector_ok or st.session_state.get("bill_collector_consumer") != (info["consumer_no"] if info else None):
         st.info("Fill Consumer No. and click OK to proceed.")
@@ -178,22 +187,32 @@ def show_bill_calculator():
         return
 
     mf_factor = kwh_mf
-    st.success(f"Consumer confirmed. MF factor loaded: {mf_factor:g}")
+    st.success(f"Consumer Name: {info['name']}")
 
     st.subheader("KWH")
     kwh_cols = st.columns(5)
-    prev_kwh = kwh_cols[0].number_input("Previous KWH", min_value=0.0, value=0.0, key="prev_kwh")
-    pres_kwh = kwh_cols[1].number_input("Present KWH", min_value=0.0, value=0.0, key="pres_kwh")
-    kwh_diff = pres_kwh - prev_kwh
+    prev_kwh = kwh_cols[0].text_input("Previous KWH", value="0", key="prev_kwh")
+    pres_kwh = kwh_cols[1].text_input("Present KWH", value="0", key="pres_kwh")
+    prev_kwh_num = _to_float(prev_kwh)
+    pres_kwh_num = _to_float(pres_kwh)
+    if prev_kwh_num is None or pres_kwh_num is None:
+        st.error("KWH readings must be numeric.")
+        return
+    kwh_diff = pres_kwh_num - prev_kwh_num
     kwh_cols[2].number_input("KWH Difference", value=float(kwh_diff), disabled=True, key="kwh_diff")
-    kwh_cols[3].text_input("Consumer Name", value=info["name"], disabled=True, key="kwh_consumer_name")
+    kwh_cols[3].number_input("MF factor", value=float(mf_factor), disabled=True, key="kwh_mf")
     kwh_cols[4].number_input("Consumption", value=float(kwh_diff * mf_factor), disabled=True, key="kwh_consumption")
 
     st.subheader("KVAH")
     kvah_cols = st.columns(5)
-    prev_kvah = kvah_cols[0].number_input("Previous KVAH", min_value=0.0, value=0.0, key="prev_kvah")
-    pres_kvah = kvah_cols[1].number_input("Present KVAH", min_value=0.0, value=0.0, key="pres_kvah")
-    kvah_diff = pres_kvah - prev_kvah
+    prev_kvah = kvah_cols[0].text_input("Previous KVAH", value="0", key="prev_kvah")
+    pres_kvah = kvah_cols[1].text_input("Present KVAH", value="0", key="pres_kvah")
+    prev_kvah_num = _to_float(prev_kvah)
+    pres_kvah_num = _to_float(pres_kvah)
+    if prev_kvah_num is None or pres_kvah_num is None:
+        st.error("KVAH readings must be numeric.")
+        return
+    kvah_diff = pres_kvah_num - prev_kvah_num
     kvah_cols[2].number_input("KVAH Difference", value=float(kvah_diff), disabled=True, key="kvah_diff")
-    kvah_cols[3].text_input("Consumer Name", value=info["name"], disabled=True, key="kvah_consumer_name")
+    kvah_cols[3].number_input("MF factor", value=float(mf_factor), disabled=True, key="kvah_mf")
     kvah_cols[4].number_input("Consumption", value=float(kvah_diff * mf_factor), disabled=True, key="kvah_consumption")
