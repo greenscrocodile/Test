@@ -98,13 +98,19 @@ def show_challan_generator():
 
         # Template check stubs (Logic preserved from original)
         if challan_type == "C. C":
-            if os.path.exists(CC_ADVANCE_TEMPLATE): st.success("✅ C.C Template Loaded")
-            else: st.error(f"❌ {CC_ADVANCE_TEMPLATE} Missing!")
+            if os.path.exists(CC_ADVANCE_TEMPLATE):
+                st.success("✅ C.C Template Loaded")
+            else:
+                st.error(f"❌ {CC_ADVANCE_TEMPLATE} Missing!")
         else:
-            if os.path.exists(CC_ADVANCE_TEMPLATE): st.success("✅ CCTemplate Loaded")
-            else: st.error(f"❌ {CC_ADVANCE_TEMPLATE} Missing!")
-            if os.path.exists(SD_TEMPLATE): st.success("✅ SDTemplate Loaded")
-            else: st.error(f"❌ {SD_TEMPLATE} Missing!")
+            if os.path.exists(CC_ADVANCE_TEMPLATE):
+                st.success("✅ CCTemplate Loaded")
+            else:
+                st.error(f"❌ {CC_ADVANCE_TEMPLATE} Missing!")
+            if os.path.exists(SD_TEMPLATE):
+                st.success("✅ SDTemplate Loaded")
+            else:
+                st.error(f"❌ {SD_TEMPLATE} Missing!")
 
         st.subheader("📊 Master Data")
         # Enhancement: GitHub Data Picker
@@ -298,9 +304,19 @@ def show_challan_generator():
                 search_num = st.text_input("Enter Consumer Number (3 digits)", max_chars=3, key=f"consumer_{st.session_state.consumer_key}")
                 if search_num and len(search_num) == 3:
                     result = df[df["Consumer Number"].astype(str).str.zfill(3) == search_num]
-                    if not result.empty: row = result.iloc[0]
-                    else: st.error("Not found.")
+                    if not result.empty:
+                        row = result.iloc[0]
+                    else:
+                        st.error("Not found.")
 
+            has_row_data = isinstance(row, (dict, pd.Series))
+            if has_row_data:
+                st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
+
+        has_row_data = has_row_data or isinstance(row, (dict, pd.Series))
+        has_total_amount = isinstance(total_amt, numbers.Real) and not pd.isna(total_amt)
+
+        if has_row_data and has_total_amount:
             has_row_data = isinstance(row, (dict, pd.Series))
             if has_row_data:
                 st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
