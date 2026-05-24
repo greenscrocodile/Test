@@ -157,10 +157,7 @@ else:
     elif st.session_state.active_page == "Solar Info and Open Access":
         show_solar_info()
     elif st.session_state.active_page == "Average Calculator":
-        try:
         show_average_calculator()
-    except Exception as e:
-        st.error(f"Error: {e}")  # This will show the full error on screen
     elif st.session_state.active_page == "Home Ground Settings":
         show_home_ground_settings()
     elif st.session_state.active_page == "HTS Development":
