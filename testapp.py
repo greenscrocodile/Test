@@ -78,7 +78,7 @@ if st.session_state.active_page == "Home":
         ("🔄\nReconciliation Editor", "Recon Editor"),
         ("🧾\nReceipt Generator", "Receipt Generator"),
         ("🧮\nHT Bill Calculator", "Bill Calculator"),
-        ("✏️\nHT Bill corrector", "Bill Corrector"),
+        ("✏️\nHT Bill Corrector", "Bill Corrector"),
         ("📁\nFile Management", "File Manager"),
         ("☀️\nSolar Info and Open Access", "Solar Info"),
         ("📊\nAverage Calculator", "Average Calculator"),
