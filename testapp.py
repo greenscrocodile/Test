@@ -1,5 +1,4 @@
 import streamlit as st
-from challan_generator import show_challan_generator
 from recon_editor import show_recon_editor
 from receipt_generator import show_receipt_generator
 from bill_calculator import show_bill_calculator
@@ -34,7 +33,7 @@ if st.session_state.active_page == "Home":
         }
         /* Dashboard Button Styling */
         .stButton button {
-            height: 220px !important;
+            height: 190px !important;
             width: 100% !important;
             max-width: 350px !important;
             margin: 0 auto !important;
@@ -78,21 +77,26 @@ if st.session_state.active_page == "Home":
         ("✏️\nBill Corrector", "Bill Corrector"),
         ("📁\nFile Manager", "File Manager"),
         ("🗂️\nFile & Text Holder", "File & Text Holder"),
+        ("☀️\nSolar Info", "Solar Info"),
+        ("📊\nAverage Calculator", "Average Calculator"),
+        ("⚙️\nSettings", "Settings"),
+        ("🏗️\nHT Dev", "HT Dev"),
         ("🚀\nComing Soon", "Coming Soon"),
+        ("🚀\nComing Soon", "Coming Soon 2"),
     ]
 
-    for i in range(0, 8, 4):
-        cols = st.columns(4, gap="medium")
-        for j in range(4):
+    for i in range(0, 12, 6):
+        cols = st.columns(6, gap="small")
+        for j in range(6):
             idx = i + j
             if idx < len(tools):
                 label, page = tools[idx]
                 with cols[j]:
                     if st.button(label, key=f"dash_btn_{idx}"):
-                        if page != "Coming Soon":
+                        if page not in {"Coming Soon", "Coming Soon 2", "Solar Info", "Average Calculator", "Settings", "HT Dev"}:
                             navigate_to(page)
                         else:
-                            st.toast("🚀 Coming Soon!")
+                            st.toast(f"🚀 {page} is coming soon!")
 
 else:
     st.markdown(r"""
@@ -132,6 +136,7 @@ else:
     st.write("---")
 
     if st.session_state.active_page == "Challan Generator":
+        from challan_generator import show_challan_generator
         show_challan_generator()
     elif st.session_state.active_page == "Recon Editor":
         show_recon_editor()
