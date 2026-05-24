@@ -7,7 +7,7 @@ FILES_FOLDER = "user_files"
 TEXT_FOLDER = "persistent_data"
 TEXT_FILE = "text_holder.json"
 TEXT_KEY = "stored_text"
-CORE_MASTER_FILES = ["BILLMAST.xlsx", "NAMEMAST.xlsx", "READMAST.xlsx", "ARREMAST.xlsx"]
+CORE_MASTER_FILES = ["BILLMAST", "NAMEMAST", "READMAST", "ARREMAST"]
 
 
 def _load_local_text():
@@ -67,9 +67,10 @@ def show_file_text_holder():
             else:
                 file_lookup = {f_meta["name"]: f_meta for f_meta in files}
                 slot_cols = st.columns(4, gap="small")
-                for idx, fixed_name in enumerate(CORE_MASTER_FILES):
+                for idx, fixed_base in enumerate(CORE_MASTER_FILES):
+                    fixed_name = f"{fixed_base}.xlsx"
                     with slot_cols[idx]:
-                        st.markdown(f"**{fixed_name.replace('.xlsx', '')}**")
+                        st.markdown(f"**{fixed_base}**")
                         if fixed_name in file_lookup:
                             st.caption(f"✅ {fixed_name}")
                         else:

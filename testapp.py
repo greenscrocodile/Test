@@ -4,6 +4,10 @@ from receipt_generator import show_receipt_generator
 from bill_calculator import show_bill_calculator
 from bill_corrector import show_bill_corrector
 from file_text_holder import show_file_text_holder
+from solar_info import show_solar_info
+from average_calculator import show_average_calculator
+from home_ground_settings import show_home_ground_settings
+from hts_development import show_hts_development
 
 # --- APP CONFIGURATION ---
 st.set_page_config(page_title="HTS WORKS", layout="wide")
@@ -81,7 +85,7 @@ if st.session_state.active_page == "Home":
         ("🗂️\nFile & Text Holder", "File & Text Holder"),
         ("⚙️\nHome Ground Settings", "Settings"),
         ("🏗️\nHTS Development", "HT Dev"),
-        ("🚀\ncoming  Soon...", "Coming Soon"),
+        ("🚀\nComing Soon.....", "Coming Soon"),
     ]
 
     for i in range(0, 12, 6):
@@ -151,14 +155,10 @@ else:
     elif st.session_state.active_page == "File & Text Holder":
         show_file_text_holder()
     elif st.session_state.active_page == "Solar Info":
-        st.subheader("☀️ Solar Info and Open Access")
-        st.info("Work in Progress.")
+        show_solar_info()
     elif st.session_state.active_page == "Average Calculator":
-        st.subheader("📊 Average Calculator")
-        st.info("Work in Progress.")
+        show_average_calculator()
     elif st.session_state.active_page == "Settings":
-        st.subheader("⚙️ Home Ground Settings")
-        st.info("Work in Progress.")
+        show_home_ground_settings()
     elif st.session_state.active_page == "HT Dev":
-        st.subheader("🏗️ HTS Development")
-        st.info("Work in Progress.")
+        show_hts_development()
