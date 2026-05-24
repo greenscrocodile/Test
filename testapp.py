@@ -99,7 +99,7 @@ if st.session_state.active_page == "Home":
                         if page not in {"Coming Soon"}:
                             navigate_to(page)
                         else:
-                            st.toast(f"🚀 {page} is coming soon!")
+                            st.toast(f" {page} is coming soon!")
 
 else:
     st.markdown(r"""
