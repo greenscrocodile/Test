@@ -7,6 +7,7 @@ FILES_FOLDER = "user_files"
 TEXT_FOLDER = "persistent_data"
 TEXT_FILE = "text_holder.json"
 TEXT_KEY = "stored_text"
+CORE_MASTER_FILES = ["BILLMAST.xlsx", "NAMEMAST.xlsx", "READMAST.xlsx", "ARREMAST.xlsx"]
 
 
 def _load_local_text():
@@ -55,6 +56,53 @@ def show_file_text_holder():
         if not config:
             st.info("Enable GitHub secrets to use file upload/download/delete.")
         else:
+            st.subheader("🧩 Core Master Files")
+            st.caption("Update these shared files used across functions/apps.")
+            files = []
+            with st.spinner("Loading files from GitHub..."):
+                files, error = list_files_github(FILES_FOLDER)
+
+            if error:
+                st.error(f"Error connecting to GitHub: {error}")
+            else:
+                file_lookup = {f_meta["name"]: f_meta for f_meta in files}
+                slot_cols = st.columns(4, gap="small")
+                for idx, fixed_name in enumerate(CORE_MASTER_FILES):
+                    with slot_cols[idx]:
+                        st.markdown(f"**{fixed_name.replace('.xlsx', '')}**")
+                        if fixed_name in file_lookup:
+                            st.caption(f"✅ {fixed_name}")
+                        else:
+                            st.caption("❌ Not uploaded")
+
+                        uploaded_fixed = st.file_uploader(
+                            "Upload replacement",
+                            type=["xlsx"],
+                            key=f"core_upload_{fixed_name}",
+                            label_visibility="collapsed"
+                        )
+                        if uploaded_fixed is not None:
+                            with st.spinner(f"Syncing {fixed_name}..."):
+                                success, up_error = upload_file_github(FILES_FOLDER, fixed_name, uploaded_fixed.getvalue())
+                            if success:
+                                st.toast(f"✅ {fixed_name} updated")
+                                st.rerun()
+                            else:
+                                st.error(f"❌ Upload failed: {up_error}")
+
+                        if st.button("🗑️ Delete", key=f"core_del_{fixed_name}", type="secondary"):
+                            if fixed_name in file_lookup:
+                                with st.spinner(f"Deleting {fixed_name}..."):
+                                    success, del_error = delete_file_github(FILES_FOLDER, fixed_name)
+                                if success:
+                                    st.toast(f"🗑️ {fixed_name} deleted")
+                                    st.rerun()
+                                else:
+                                    st.error(f"❌ Delete failed: {del_error}")
+                            else:
+                                st.warning(f"{fixed_name} not found.")
+
+            st.divider()
             uploaded_files = st.file_uploader(
                 "Select files to sync with repository",
                 accept_multiple_files=True,
@@ -73,12 +121,7 @@ def show_file_text_holder():
 
             st.divider()
             st.subheader("📂 Repository Storage")
-            with st.spinner("Loading files from GitHub..."):
-                files, error = list_files_github(FILES_FOLDER)
-
-            if error:
-                st.error(f"Error connecting to GitHub: {error}")
-            elif files:
+            if files:
                 st.caption(f"Currently storing {len(files)} files in `{FILES_FOLDER}/`")
                 for idx, f_meta in enumerate(files):
                     filename = f_meta["name"]
