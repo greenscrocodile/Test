@@ -122,6 +122,7 @@ def show_bill_calculator():
 
     st.sidebar.markdown("### Consumer Information")
     if info:
+        st.sidebar.success("✅ Consumer details fetched successfully.")
         st.sidebar.markdown(
             f"""
             <div style="border:1px solid #93c5fd; background:#eff6ff; border-radius:10px; padding:10px; margin-bottom:8px;">
@@ -181,18 +182,18 @@ def show_bill_calculator():
 
     st.subheader("KWH")
     kwh_cols = st.columns(5)
-    prev_kwh = kwh_cols[0].number_input("Previous KWH", min_value=0.0, value=0.0, step=1.0)
-    pres_kwh = kwh_cols[1].number_input("Present KWH", min_value=0.0, value=0.0, step=1.0)
+    prev_kwh = kwh_cols[0].number_input("Previous KWH", min_value=0.0, value=0.0, key="prev_kwh")
+    pres_kwh = kwh_cols[1].number_input("Present KWH", min_value=0.0, value=0.0, key="pres_kwh")
     kwh_diff = pres_kwh - prev_kwh
-    kwh_cols[2].number_input("KWH Difference", value=float(kwh_diff), disabled=True)
-    kwh_cols[3].number_input("MF factor", value=float(mf_factor), disabled=True)
-    kwh_cols[4].number_input("Consumption", value=float(kwh_diff * mf_factor), disabled=True)
+    kwh_cols[2].number_input("KWH Difference", value=float(kwh_diff), disabled=True, key="kwh_diff")
+    kwh_cols[3].text_input("Consumer Name", value=info["name"], disabled=True, key="kwh_consumer_name")
+    kwh_cols[4].number_input("Consumption", value=float(kwh_diff * mf_factor), disabled=True, key="kwh_consumption")
 
     st.subheader("KVAH")
     kvah_cols = st.columns(5)
-    prev_kvah = kvah_cols[0].number_input("Previous KVAH", min_value=0.0, value=0.0, step=1.0)
-    pres_kvah = kvah_cols[1].number_input("Present KVAH", min_value=0.0, value=0.0, step=1.0)
+    prev_kvah = kvah_cols[0].number_input("Previous KVAH", min_value=0.0, value=0.0, key="prev_kvah")
+    pres_kvah = kvah_cols[1].number_input("Present KVAH", min_value=0.0, value=0.0, key="pres_kvah")
     kvah_diff = pres_kvah - prev_kvah
-    kvah_cols[2].number_input("KVAH Difference", value=float(kvah_diff), disabled=True)
-    kvah_cols[3].number_input("MF factor", value=float(mf_factor), disabled=True)
-    kvah_cols[4].number_input("Consumption", value=float(kvah_diff * mf_factor), disabled=True)
+    kvah_cols[2].number_input("KVAH Difference", value=float(kvah_diff), disabled=True, key="kvah_diff")
+    kvah_cols[3].text_input("Consumer Name", value=info["name"], disabled=True, key="kvah_consumer_name")
+    kvah_cols[4].number_input("Consumption", value=float(kvah_diff * mf_factor), disabled=True, key="kvah_consumption")
