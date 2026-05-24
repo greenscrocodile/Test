@@ -1,5 +1,4 @@
 import streamlit as st
-from challan_generator import show_challan_generator
 from recon_editor import show_recon_editor
 from receipt_generator import show_receipt_generator
 from bill_calculator import show_bill_calculator
@@ -34,7 +33,7 @@ if st.session_state.active_page == "Home":
         }
         /* Dashboard Button Styling */
         .stButton button {
-            height: 220px !important;
+            height: 190px !important;
             width: 100% !important;
             max-width: 350px !important;
             margin: 0 auto !important;
@@ -72,18 +71,22 @@ if st.session_state.active_page == "Home":
 
     tools = [
         ("📝\nChallan Generator", "Challan Generator"),
-        ("🔄\nRecon Editor", "Recon Editor"),
+        ("🔄\nReconciliation Editor", "Recon Editor"),
         ("🧾\nReceipt Generator", "Receipt Generator"),
-        ("🧮\nBill Calculator", "Bill Calculator"),
-        ("✏️\nBill Corrector", "Bill Corrector"),
-        ("📁\nFile Manager", "File Manager"),
+        ("🧮\nHT Bill Calculator", "Bill Calculator"),
+        ("✏️\nHT Bill corrector", "Bill Corrector"),
+        ("📁\nFile Management", "File Manager"),
+        ("☀️\nSolar Info and Open Access", "Solar Info"),
+        ("📊\nAverage Calculator", "Average Calculator"),
         ("🗂️\nFile & Text Holder", "File & Text Holder"),
-        ("🚀\nComing Soon", "Coming Soon"),
+        ("⚙️\nHome Ground Settings", "Settings"),
+        ("🏗️\nHTS Development", "HT Dev"),
+        ("🚀\ncoming  Soon...", "Coming Soon"),
     ]
 
-    for i in range(0, 8, 4):
-        cols = st.columns(4, gap="medium")
-        for j in range(4):
+    for i in range(0, 12, 6):
+        cols = st.columns(6, gap="small")
+        for j in range(6):
             idx = i + j
             if idx < len(tools):
                 label, page = tools[idx]
@@ -92,7 +95,7 @@ if st.session_state.active_page == "Home":
                         if page != "Coming Soon":
                             navigate_to(page)
                         else:
-                            st.toast("🚀 Coming Soon!")
+                            st.toast(f"🚀 {page} is coming soon!")
 
 else:
     st.markdown(r"""
@@ -132,6 +135,7 @@ else:
     st.write("---")
 
     if st.session_state.active_page == "Challan Generator":
+        from challan_generator import show_challan_generator
         show_challan_generator()
     elif st.session_state.active_page == "Recon Editor":
         show_recon_editor()
@@ -146,3 +150,15 @@ else:
         show_file_manager()
     elif st.session_state.active_page == "File & Text Holder":
         show_file_text_holder()
+    elif st.session_state.active_page == "Solar Info":
+        st.subheader("☀️ Solar Info and Open Access")
+        st.info("Work in Progress.")
+    elif st.session_state.active_page == "Average Calculator":
+        st.subheader("📊 Average Calculator")
+        st.info("Work in Progress.")
+    elif st.session_state.active_page == "Settings":
+        st.subheader("⚙️ Home Ground Settings")
+        st.info("Work in Progress.")
+    elif st.session_state.active_page == "HT Dev":
+        st.subheader("🏗️ HTS Development")
+        st.info("Work in Progress.")
