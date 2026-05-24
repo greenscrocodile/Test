@@ -1,10 +1,13 @@
 import streamlit as st
-from challan_generator import show_challan_generator
 from recon_editor import show_recon_editor
 from receipt_generator import show_receipt_generator
 from bill_calculator import show_bill_calculator
 from bill_corrector import show_bill_corrector
 from file_text_holder import show_file_text_holder
+from solar_info import show_solar_info
+from average_calculator import show_average_calculator
+from home_ground_settings import show_home_ground_settings
+from hts_development import show_hts_development
 
 # --- APP CONFIGURATION ---
 st.set_page_config(page_title="HTS WORKS", layout="wide")
@@ -12,6 +15,13 @@ st.set_page_config(page_title="HTS WORKS", layout="wide")
 # --- NAVIGATION LOGIC ---
 if "active_page" not in st.session_state:
     st.session_state.active_page = "Home"
+
+PAGE_ALIASES = {
+    "Solar Info": "Solar Info and Open Access",
+    "Settings": "Home Ground Settings",
+    "HT Dev": "HTS Development",
+}
+st.session_state.active_page = PAGE_ALIASES.get(st.session_state.active_page, st.session_state.active_page)
 
 def navigate_to(page):
     st.session_state.active_page = page
@@ -34,7 +44,7 @@ if st.session_state.active_page == "Home":
         }
         /* Dashboard Button Styling */
         .stButton button {
-            height: 220px !important;
+            height: 190px !important;
             width: 100% !important;
             max-width: 350px !important;
             margin: 0 auto !important;
@@ -72,18 +82,22 @@ if st.session_state.active_page == "Home":
 
     tools = [
         ("📝\nChallan Generator", "Challan Generator"),
-        ("🔄\nRecon Editor", "Recon Editor"),
+        ("🔄\nReconciliation Editor", "Recon Editor"),
         ("🧾\nReceipt Generator", "Receipt Generator"),
-        ("🧮\nBill Calculator", "Bill Calculator"),
-        ("✏️\nBill Corrector", "Bill Corrector"),
-        ("📁\nFile Manager", "File Manager"),
+        ("🧮\nHT Bill Calculator", "Bill Calculator"),
+        ("✏️\nHT Bill Corrector", "Bill Corrector"),
+        ("📁\nFile Management", "File Manager"),
+        ("☀️\nSolar Info and Open Access", "Solar Info and Open Access"),
+        ("📊\nAverage Calculator", "Average Calculator"),
         ("🗂️\nFile & Text Holder", "File & Text Holder"),
-        ("🚀\nComing Soon", "Coming Soon"),
+        ("⚙️\nHome Ground Settings", "Home Ground Settings"),
+        ("🏗️\nHTS Development", "HTS Development"),
+        ("🚀\nComing Soon.....", "Coming Soon"),
     ]
 
-    for i in range(0, 8, 4):
-        cols = st.columns(4, gap="medium")
-        for j in range(4):
+    for i in range(0, 12, 6):
+        cols = st.columns(6, gap="small")
+        for j in range(6):
             idx = i + j
             if idx < len(tools):
                 label, page = tools[idx]
@@ -92,7 +106,7 @@ if st.session_state.active_page == "Home":
                         if page != "Coming Soon":
                             navigate_to(page)
                         else:
-                            st.toast("🚀 Coming Soon!")
+                            st.toast(f"🚀 {page} is coming soon!")
 
 else:
     st.markdown(r"""
@@ -132,6 +146,7 @@ else:
     st.write("---")
 
     if st.session_state.active_page == "Challan Generator":
+        from challan_generator import show_challan_generator
         show_challan_generator()
     elif st.session_state.active_page == "Recon Editor":
         show_recon_editor()
@@ -146,3 +161,13 @@ else:
         show_file_manager()
     elif st.session_state.active_page == "File & Text Holder":
         show_file_text_holder()
+    elif st.session_state.active_page == "Solar Info and Open Access":
+        show_solar_info()
+    elif st.session_state.active_page == "Average Calculator":
+        show_average_calculator()
+    elif st.session_state.active_page == "Home Ground Settings":
+        show_home_ground_settings()
+    elif st.session_state.active_page == "HTS Development":
+        show_hts_development()
+    else:
+        st.warning(f"Page not configured yet: {st.session_state.active_page}")
