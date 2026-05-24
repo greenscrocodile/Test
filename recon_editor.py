@@ -1,6 +1,7 @@
 import streamlit as st
 
 def show_recon_editor():
-    st.title("🔄 Recon Editor")
+    st.title("🔄 Reconciliation Editor")
     st.write("---")
-    st.info("Work in Progress: Recon Editor features are being developed.")
+    st.success("Reconciliation Editor page opened successfully.")
+    st.info("Feature build is in progress.")
