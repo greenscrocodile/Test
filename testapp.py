@@ -80,11 +80,11 @@ if st.session_state.active_page == "Home":
         ("🧮\nHT Bill Calculator", "Bill Calculator"),
         ("✏️\nHT Bill Corrector", "Bill Corrector"),
         ("📁\nFile Management", "File Manager"),
-        ("☀️\nSolar Info and Open Access", "Solar Info"),
+        ("☀️\nSolar Info and Open Access", "Solar Info and Open Access"),
         ("📊\nAverage Calculator", "Average Calculator"),
         ("🗂️\nFile & Text Holder", "File & Text Holder"),
-        ("⚙️\nHome Ground Settings", "Settings"),
-        ("🏗️\nHTS Development", "HT Dev"),
+        ("⚙️\nHome Ground Settings", "Home Ground Settings"),
+        ("🏗️\nHTS Development", "HTS Development"),
         ("🚀\nComing Soon.....", "Coming Soon"),
     ]
 
@@ -154,11 +154,11 @@ else:
         show_file_manager()
     elif st.session_state.active_page == "File & Text Holder":
         show_file_text_holder()
-    elif st.session_state.active_page == "Solar Info":
+    elif st.session_state.active_page == "Solar Info and Open Access":
         show_solar_info()
     elif st.session_state.active_page == "Average Calculator":
         show_average_calculator()
-    elif st.session_state.active_page == "Settings":
+    elif st.session_state.active_page == "Home Ground Settings":
         show_home_ground_settings()
-    elif st.session_state.active_page == "HT Dev":
+    elif st.session_state.active_page == "HTS Development":
         show_hts_development()
