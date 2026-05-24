@@ -3,6 +3,7 @@ import os
 import re
 import uuid
 import requests
+import numbers
 from datetime import date, datetime
 
 import pandas as pd
@@ -87,8 +88,11 @@ def show_challan_generator():
         s_challan = st.text_input("Starting Challan", disabled=st.session_state.locked, max_chars=4)
         s_pdate = st.date_input("Challan Date", disabled=st.session_state.locked)
 
-        if s_challan and not s_challan.isdigit():
-            st.error("Challan Number must contain Numbers only.")
+        if s_challan:
+            if not s_challan.isdigit():
+                st.error("Challan Number must contain Numbers only.")
+            elif len(s_challan) > 4:
+                st.error("Challan Number can have maximum 4 digits.")
 
         st.divider()
 
@@ -124,8 +128,8 @@ def show_challan_generator():
 
         if not st.session_state.locked:
             if st.button("Confirm Setup", type="primary"):
-                if not s_challan or not s_challan.isdigit():
-                    st.error("Enter a valid Numeric Challan Number.")
+                if not s_challan or not s_challan.isdigit() or len(s_challan) > 4:
+                    st.error("Enter a valid Numeric Challan Number (max 4 digits).")
                 elif data_source == "Local Upload" and not data_file_buffer:
                     st.error("Upload Master Data.")
                 elif data_source == "GitHub Holder" and not selected_gh_file:
@@ -185,6 +189,8 @@ def show_challan_generator():
         tag_value = ""
         account_value = ""
         has_active_instruments = len(st.session_state.temp_instruments) > 0
+
+        has_row_data = False
 
         if st.session_state.challan_type == "C. C":
             st.subheader("📄 C.C Challan Input")
@@ -295,9 +301,14 @@ def show_challan_generator():
                     if not result.empty: row = result.iloc[0]
                     else: st.error("Not found.")
 
-            if row: st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
+            has_row_data = isinstance(row, (dict, pd.Series))
+            if has_row_data:
+                st.success(f"**Name:** {row['Name']} | **Purpose:** {purpose_value}")
 
-        if row and total_amt is not None:
+        has_row_data = has_row_data or isinstance(row, (dict, pd.Series))
+        has_total_amount = isinstance(total_amt, numbers.Real) and not pd.isna(total_amt)
+
+        if has_row_data and has_total_amount:
             # Bank & Payment Selection
             bank_name = st.session_state.selected_bank
             b1, b2 = st.columns([0.9, 0.1], vertical_alignment="bottom")
@@ -351,6 +362,12 @@ def show_challan_generator():
             st.divider()
             batch_total = sum(int(r["amount"].replace(",", "")) for r in st.session_state.all_receipts)
 
+            st.success("### 📊 Batch Summary")
+            cc1, cc2 = st.columns([0.3, 0.7])
+            cc1.metric("Total Amount", f"₹{format_indian_currency(batch_total)}")
+            cc2.write("**Total in Words:**")
+            cc2.markdown(f"#### {amount_words(batch_total)} Only")
+
             show_batch_val = st.checkbox("👁️ View Batch Table", value=st.session_state.show_batch)
             st.session_state.show_batch = show_batch_val
 
@@ -371,13 +388,6 @@ def show_challan_generator():
                                 st.session_state.all_receipts[j]["challan"] = str(current_val - 1).zfill(4)
                             if not st.session_state.all_receipts: st.session_state.batch_purpose = ""; st.session_state.other_form_key += 1
                             st.rerun()
-
-                # Enhancement: Batch Summary at the bottom
-                st.success("### 📊 Batch Summary")
-                cc1, cc2 = st.columns([0.3, 0.7])
-                cc1.metric("Total Amount", f"₹{format_indian_currency(batch_total)}")
-                cc2.write("**Total in Words:**")
-                cc2.markdown(f"#### {amount_words(batch_total)} Only")
 
             st.write("---")
             if st.button("🚀 Finalize Word File", type="primary", key="finalize_btn"):
