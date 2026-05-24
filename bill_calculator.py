@@ -24,6 +24,29 @@ def _load_master_from_github(file_meta):
 def _value_from_row(row, key, default="-"):
     return str(row.get(key, default)) if pd.notna(row.get(key, None)) else default
 
+
+def _map_priv(value):
+    mapping = {"P": "Private", "G": "Government"}
+    return mapping.get(str(value).strip().upper(), str(value))
+
+
+def _map_indl(value):
+    mapping = {
+        "I": "Industry",
+        "C": "Commercial",
+        "E": "EV Charging Station",
+        "G": "Central Govt.",
+    }
+    return mapping.get(str(value).strip().upper(), str(value))
+
+
+def _to_float(value):
+    try:
+        return float(value)
+    except Exception:
+        return None
+
+
 def show_bill_calculator():
     st.title("🧮 Bill Collector")
     st.write("---")
@@ -53,14 +76,16 @@ def show_bill_calculator():
 
     namemast_meta = _find_file_meta(files, "NAMEMAST")
     billmast_meta = _find_file_meta(files, "BILLMAST")
+    readmast_meta = _find_file_meta(files, "READMAST")
 
-    if not namemast_meta or not billmast_meta:
-        st.error("Required files missing in user_files/: NAMEMAST.xlsx and BILLMAST.xlsx")
+    if not namemast_meta or not billmast_meta or not readmast_meta:
+        st.error("Required files missing in user_files/: NAMEMAST.xlsx, BILLMAST.xlsx, READMAST.xlsx")
         return
 
     try:
         df_name = _load_master_from_github(namemast_meta)
         df_bill = _load_master_from_github(billmast_meta)
+        df_read = _load_master_from_github(readmast_meta)
     except Exception as exc:
         st.error(f"Failed to open master files: {exc}")
         return
@@ -88,8 +113,8 @@ def show_bill_calculator():
             info = {
                 "consumer_no": consumer_no,
                 "name": _value_from_row(name_row, "CON_NAME"),
-                "priv": _value_from_row(name_row, "PRIV_CON"),
-                "indl": _value_from_row(name_row, "INDLTYPE"),
+                "priv": _map_priv(_value_from_row(name_row, "PRIV_CON")),
+                "indl": _map_indl(_value_from_row(name_row, "INDLTYPE")),
                 "sanct_md": _value_from_row(bill_row, "SANCT_MD"),
                 "meter_type": _value_from_row(bill_row, "METER_TYPE"),
                 "serv_cat": _value_from_row(bill_row, "SERV_CAT"),
@@ -97,13 +122,26 @@ def show_bill_calculator():
 
     st.sidebar.markdown("### Consumer Information")
     if info:
-        st.sidebar.write(f"**Consumer No.:** {info['consumer_no']}")
-        st.sidebar.write(f"**Name:** {info['name']}")
-        st.sidebar.write(f"**Private/Government:** {info['priv']}")
-        st.sidebar.write(f"**Industry/Commercial:** {info['indl']}")
-        st.sidebar.write(f"**Sanction Demand:** {info['sanct_md']}")
-        st.sidebar.write(f"**Meter Type:** {info['meter_type']}")
-        st.sidebar.write(f"**Service Cat No.:** {info['serv_cat']}")
+        st.sidebar.markdown(
+            f"""
+            <div style="border:1px solid #93c5fd; background:#eff6ff; border-radius:10px; padding:10px; margin-bottom:8px;">
+                <b>{info['consumer_no']}</b><br>
+                {info['name']}<br>
+                <b>{info['priv']} | {info['indl']}</b>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.sidebar.markdown(
+            f"""
+            <div style="border:1px solid #86efac; background:#f0fdf4; border-radius:10px; padding:10px;">
+                <b>Sanction Demand:</b> {info['sanct_md']}<br>
+                <b>Meter Type:</b> {info['meter_type']}<br>
+                <b>Service Cat No.:</b> {info['serv_cat']}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     else:
         st.sidebar.caption("Enter a valid 3-digit Consumer No. to fetch details.")
 
@@ -111,7 +149,50 @@ def show_bill_calculator():
     ok_clicked = st.sidebar.button("OK", type="primary", disabled=ok_disabled)
 
     if ok_clicked:
-        st.success("Consumer data confirmed. Bill calculation flow will start next.")
-        st.json(info)
-    else:
+        st.session_state.bill_collector_ok = True
+        st.session_state.bill_collector_consumer = info["consumer_no"]
+    elif "bill_collector_ok" not in st.session_state:
+        st.session_state.bill_collector_ok = False
+
+    if not st.session_state.bill_collector_ok or st.session_state.get("bill_collector_consumer") != (info["consumer_no"] if info else None):
         st.info("Fill Consumer No. and click OK to proceed.")
+        return
+
+    read_row_df = df_read[df_read["CON_CODE"].astype(str).str.zfill(3) == info["consumer_no"]]
+    if read_row_df.empty:
+        st.error("Consumer not found in READMAST.")
+        return
+
+    read_row = read_row_df.iloc[0]
+    kwh_mf = _to_float(read_row.get("KWH_MF"))
+    kwd_mf = _to_float(read_row.get("KWD_MF"))
+    kvad_mf = _to_float(read_row.get("KVAD_MF"))
+
+    if kwh_mf is None or kwd_mf is None or kvad_mf is None:
+        st.error("MF values missing/invalid in READMAST.")
+        return
+
+    if not (kwh_mf == kwd_mf == kvad_mf):
+        st.error("MF mismatch in READMAST: KWH_MF, KWD_MF, KVAD_MF should be same.")
+        return
+
+    mf_factor = kwh_mf
+    st.success(f"Consumer confirmed. MF factor loaded: {mf_factor:g}")
+
+    st.subheader("KWH")
+    kwh_cols = st.columns(5)
+    prev_kwh = kwh_cols[0].number_input("Previous KWH", min_value=0.0, value=0.0, step=1.0)
+    pres_kwh = kwh_cols[1].number_input("Present KWH", min_value=0.0, value=0.0, step=1.0)
+    kwh_diff = pres_kwh - prev_kwh
+    kwh_cols[2].number_input("KWH Difference", value=float(kwh_diff), disabled=True)
+    kwh_cols[3].number_input("MF factor", value=float(mf_factor), disabled=True)
+    kwh_cols[4].number_input("Consumption", value=float(kwh_diff * mf_factor), disabled=True)
+
+    st.subheader("KVAH")
+    kvah_cols = st.columns(5)
+    prev_kvah = kvah_cols[0].number_input("Previous KVAH", min_value=0.0, value=0.0, step=1.0)
+    pres_kvah = kvah_cols[1].number_input("Present KVAH", min_value=0.0, value=0.0, step=1.0)
+    kvah_diff = pres_kvah - prev_kvah
+    kvah_cols[2].number_input("KVAH Difference", value=float(kvah_diff), disabled=True)
+    kvah_cols[3].number_input("MF factor", value=float(mf_factor), disabled=True)
+    kvah_cols[4].number_input("Consumption", value=float(kvah_diff * mf_factor), disabled=True)
