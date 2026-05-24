@@ -78,7 +78,7 @@ if st.session_state.active_page == "Home":
         ("🔄\nReconciliation Editor", "Recon Editor"),
         ("🧾\nReceipt Generator", "Receipt Generator"),
         ("🧮\nHT Bill Calculator", "Bill Calculator"),
-        ("✏️\nHT Bill corrector", "Bill Corrector"),
+        ("✏️\nHT Bill Corrector", "Bill Corrector"),
         ("📁\nFile Management", "File Manager"),
         ("☀️\nSolar Info and Open Access", "Solar Info and Open Access"),
         ("📊\nAverage Calculator", "Average Calculator"),
@@ -96,7 +96,7 @@ if st.session_state.active_page == "Home":
                 label, page = tools[idx]
                 with cols[j]:
                     if st.button(label, key=f"dash_btn_{idx}"):
-                        if page != "Coming Soon":
+                        if page not in {"Coming Soon", "Solar Info", "Average Calculator", "Settings", "HT Dev"}:
                             navigate_to(page)
                         else:
                             st.toast(f"🚀 {page} is coming soon!")
