@@ -1,12 +1,12 @@
 # Pocket FM Story Information Blogger Template
 
-This package contains a production-oriented Blogger XML template for building a searchable Pocket FM story information website. It does **not** host audio files. Each Blogger post stores one story's metadata as JSON, and the template renders story cards, detail pages, related stories, filters, search, pagination/load-more, SEO tags, schema, and a light/dark theme toggle.
+This package contains a production-oriented Blogger XML template for building a searchable Pocket FM story information website. It does **not** host audio files. Each Blogger post stores one story's metadata as JSON in a hidden `<pre class="story-json">` block, and the template renders story cards, detail pages, related stories, filters, search, pagination/load-more, SEO tags, schema, and a light/dark theme toggle.
 
 ## Files
 
 - `pocketfm-story-template.xml` — complete Blogger XML template with embedded HTML, CSS, and vanilla JavaScript.
 - `docs/admin-guide.md` — how to create story posts and manage global settings.
-- `docs/metadata-example.html` — copy/paste metadata block for Blogger posts.
+- `docs/metadata-example.html` — copy/paste Blogger-safe metadata block for posts.
 
 ## Key Features
 
@@ -39,6 +39,9 @@ Edit the global settings near the top of the XML template:
 window.PFM_SETTINGS = {
   SHOW_POCKETFM_BUTTON: true,
   SITE_NAME: '<data:blog.title/>',
+  HOME_URL: '<data:blog.homepageUrl/>',
+  PAGE_TYPE: '<data:blog.pageType/>',
+  CURRENT_URL: '<data:blog.canonicalUrl/>',
   FEED_BATCH_SIZE: 150,
   INITIAL_CARD_LIMIT: 24,
   LOAD_MORE_SIZE: 24,

@@ -4,7 +4,7 @@
 
 1. Open Blogger and create a **New Post**.
 2. Switch to **HTML view**.
-3. Paste the JSON block from `metadata-example.html`.
+3. Paste the JSON block from `metadata-example.html`. The preferred block uses `<pre class="story-json" style="display:none">` because Blogger sometimes strips post-level `<script>` tags on the published page.
 4. Fill every required field:
    - `storyName`
    - `posterUrl`
@@ -40,7 +40,7 @@ The navbar contains a light/dark toggle. The visitor's selection is saved in `lo
 
 ## Metadata Rules
 
-- Keep field names exactly as shown in `metadata-example.html`.
+- Keep field names exactly as shown in `metadata-example.html`. The template also supports the older `<script type="application/json" class="story-json">` format, but use the `<pre>` format if published pages do not show data.
 - Use consistent capitalization for filter values, for example always use `Ongoing`, not both `ongoing` and `Ongoing`.
 - Use square poster images when possible.
 - Use official Pocket FM URLs only.

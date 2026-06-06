@@ -30,6 +30,9 @@
         SHOW_POCKETFM_BUTTON: true,
         SITE_NAME: '<data:blog.title/>',
         HOME_URL: '<data:blog.homepageUrl/>',
+        PAGE_TYPE: '<data:blog.pageType/>',
+        PAGE_NAME: '',
+        CURRENT_URL: '<data:blog.canonicalUrl/>',
         FEED_BATCH_SIZE: 150,
         INITIAL_CARD_LIMIT: 24,
         LOAD_MORE_SIZE: 24,
@@ -149,7 +152,7 @@
       .pfm-related .pfm-card { scroll-snap-align: start; }
       .pfm-footer { margin-top: 60px; padding: 32px 0; border-top: 1px solid var(--line); color: var(--muted); }
       .blog-posts, .post-outer, .post, .post-body { margin: 0 !important; padding: 0 !important; }
-      .post-title, .post-header, .post-footer, .blog-pager, .comments, #comments { display: none !important; }
+      .post-title, .post-header, .post-footer, .blog-pager, .comments, #comments, .pfm-blog-bridge { display: none !important; }
       @media (max-width: 880px) {
         .pfm-menu { position: fixed; top: var(--nav-h); left: 16px; right: 16px; display: grid; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface-strong); box-shadow: var(--shadow); transform: translateY(-18px); opacity: 0; pointer-events: none; transition: .22s ease; }
         .pfm-menu.is-open { transform: translateY(0); opacity: 1; pointer-events: auto; }
@@ -190,51 +193,58 @@
     </nav>
 
     <main class='pfm-main'>
-      <b:section class='main' id='main' maxwidgets='1' showaddelement='false'>
-        <b:widget id='Blog1' locked='true' title='Blog Posts' type='Blog' version='2' visible='true'>
-          <b:includable id='main'>
-            <b:if cond='data:view.isPost'>
-              <b:loop values='data:posts' var='post'>
-                <article class='pfm-container pfm-story-page' expr:data-post-url='data:post.url'>
-                  <div class='pfm-source' hidden='hidden'><data:post.body/></div>
-                  <div id='pfmStoryDetail' class='pfm-detail' data-loading='true'>
-                    <div class='pfm-detail__poster'><img alt='' loading='eager' id='pfmDetailPoster'/></div>
-                    <div>
-                      <span class='pfm-kicker'>Pocket FM Story</span>
-                      <h1 id='pfmDetailTitle'><data:post.title/></h1>
-                      <div class='pfm-meta' id='pfmDetailMeta'></div>
-                      <div class='pfm-info' id='pfmDetailInfo'></div>
-                      <p class='pfm-desc' id='pfmDetailDescription'></p>
-                      <a class='pfm-btn pfm-pocket' id='pfmPocketButton' target='_blank' rel='noopener sponsored nofollow'>Listen on Pocket FM</a>
-                    </div>
-                  </div>
-                  <h2 class='pfm-section-title'>More Stories By Same Voice Artist</h2>
-                  <div class='pfm-related' id='pfmRelatedStories' aria-label='Related stories'></div>
-                </article>
-              </b:loop>
-            <b:else/>
-              <section class='pfm-hero pfm-container'>
-                <div class='pfm-hero__card'>
-                  <span class='pfm-kicker'>Searchable Story Guide</span>
-                  <h1>Discover stylish Pocket FM story information.</h1>
-                  <p>Browse stories, filter by genre, language, voice artist and status, then continue to the official Pocket FM story page. No audio files are hosted here.</p>
-                </div>
-              </section>
-              <section class='pfm-container'>
-                <div class='pfm-toolbar'>
-                  <label class='pfm-search' for='pfmSearchInput'><span>⌕</span><input id='pfmSearchInput' type='search' placeholder='Search by story name, voice artist, or genre...' autocomplete='off'/></label>
-                  <div class='pfm-filter-row'>
-                    <select id='pfmFilterGenre'><option value=''>All Genres</option></select>
-                    <select id='pfmFilterSubGenre'><option value=''>All Sub Genres</option></select>
-                    <select id='pfmFilterArtist'><option value=''>All Voice Artists</option></select>
-                    <select id='pfmFilterStatus'><option value=''>All Statuses</option></select>
-                    <select id='pfmFilterLanguage'><option value=''>All Languages</option></select>
-                  </div>
-                </div>
-                <div class='pfm-grid' id='pfmStoryGrid' aria-live='polite'></div>
-                <div class='pfm-load'><button class='pfm-btn' id='pfmLoadMore' type='button'>Load More</button></div>
-              </section>
-            </b:if>
+      <!--
+        The visible app shells are intentionally outside the Blog widget.
+        Some Blogger layouts do not execute a fully custom Blog includable reliably,
+        but normal HTML here always renders. JavaScript switches between the
+        homepage shell and story-detail shell using Blogger pageType + feed data.
+      -->
+      <section class='pfm-hero pfm-container' id='pfmHomeHero'>
+        <div class='pfm-hero__card'>
+          <span class='pfm-kicker'>Searchable Story Guide</span>
+          <h1>Discover stylish Pocket FM story information.</h1>
+          <p>Browse stories, filter by genre, language, voice artist and status, then continue to the official Pocket FM story page. No audio files are hosted here.</p>
+        </div>
+      </section>
+      <section class='pfm-container' id='pfmHomeShell'>
+        <div class='pfm-toolbar'>
+          <label class='pfm-search' for='pfmSearchInput'><span>⌕</span><input id='pfmSearchInput' type='search' placeholder='Search by story name, voice artist, or genre...' autocomplete='off'/></label>
+          <div class='pfm-filter-row'>
+            <select id='pfmFilterGenre'><option value=''>All Genres</option></select>
+            <select id='pfmFilterSubGenre'><option value=''>All Sub Genres</option></select>
+            <select id='pfmFilterArtist'><option value=''>All Voice Artists</option></select>
+            <select id='pfmFilterStatus'><option value=''>All Statuses</option></select>
+            <select id='pfmFilterLanguage'><option value=''>All Languages</option></select>
+          </div>
+        </div>
+        <div class='pfm-grid' id='pfmStoryGrid' aria-live='polite'></div>
+        <div class='pfm-load'><button class='pfm-btn' id='pfmLoadMore' type='button'>Load More</button></div>
+      </section>
+      <article class='pfm-container pfm-story-page' id='pfmDetailShell' hidden='hidden'>
+        <div id='pfmStoryDetail' class='pfm-detail' data-loading='true'>
+          <div class='pfm-detail__poster'><img alt='' loading='eager' id='pfmDetailPoster'/></div>
+          <div>
+            <span class='pfm-kicker'>Pocket FM Story</span>
+            <h1 id='pfmDetailTitle'>Story Information</h1>
+            <div class='pfm-meta' id='pfmDetailMeta'></div>
+            <div class='pfm-info' id='pfmDetailInfo'></div>
+            <p class='pfm-desc' id='pfmDetailDescription'></p>
+            <a class='pfm-btn pfm-pocket' id='pfmPocketButton' target='_blank' rel='noopener sponsored nofollow'>Listen on Pocket FM</a>
+          </div>
+        </div>
+        <h2 class='pfm-section-title'>More Stories By Same Voice Artist</h2>
+        <div class='pfm-related' id='pfmRelatedStories' aria-label='Related stories'></div>
+      </article>
+
+      <!-- Hidden Blogger post bridge. If Blogger renders it, detail pages can read the current post body directly. If it does not render, the app still falls back to the JSON feed. -->
+      <b:section class='main pfm-blog-bridge' id='main' maxwidgets='1' showaddelement='false'>
+        <b:widget id='Blog1' locked='true' title='Blog Posts' type='Blog' version='1' visible='true'>
+          <b:includable id='main' var='top'>
+            <b:loop values='data:posts' var='post'>
+              <div class='pfm-current-post-data' expr:data-post-title='data:post.title' expr:data-post-url='data:post.url'>
+                <div class='pfm-source'><data:post.body/></div>
+              </div>
+            </b:loop>
           </b:includable>
         </b:widget>
       </b:section>
@@ -251,11 +261,12 @@
       (function () {
         'use strict';
         var settings = window.PFM_SETTINGS || {};
-        var homeUrl = String(settings.HOME_URL || (location.origin + '/')).replace(/\/$/, '/');
+        var homeUrl = String(settings.HOME_URL || (location.origin + '/')).replace(/\/?$/, '/');
         var storyCache = [];
         var visibleCount = settings.INITIAL_CARD_LIMIT || 24;
         var feedLoadedAll = false;
         var feedStartIndex = 1;
+        var isDetailPage = settings.PAGE_TYPE === 'item' || settings.PAGE_TYPE === 'static_page';
 
         function qs(sel, root) { return (root || document).querySelector(sel); }
         function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
@@ -328,13 +339,33 @@
           return normalizeStory(extractJsonFromHtml(content), { title: title, url: link ? link.href : '', poster: thumb, summary: entry.summary ? entry.summary.$t : '' });
         }
 
+        function fetchFeedJson(url) {
+          return fetch(url + '&cacheBust=' + Date.now(), { credentials: 'same-origin' }).then(function (r) {
+            if (!r.ok) throw new Error('Feed HTTP ' + r.status);
+            return r.json();
+          }).catch(function () {
+            return new Promise(function (resolve, reject) {
+              var cb = 'pfmFeedCallback_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+              var script = document.createElement('script');
+              window[cb] = function (data) { cleanup(); resolve(data); };
+              function cleanup() { delete window[cb]; if (script.parentNode) script.parentNode.removeChild(script); }
+              script.onerror = function () { cleanup(); reject(new Error('Blogger JSONP feed unavailable')); };
+              script.src = url.replace('alt=json', 'alt=json-in-script') + '&callback=' + cb;
+              document.head.appendChild(script);
+            });
+          });
+        }
+
         function fetchStories(done) {
           if (feedLoadedAll) { done(storyCache); return; }
           var batch = settings.FEED_BATCH_SIZE || 150;
           var url = homeUrl + 'feeds/posts/default?alt=json&orderby=published&max-results=' + batch + '&start-index=' + feedStartIndex;
-          fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+          fetchFeedJson(url).then(function (data) {
             var entries = data.feed && data.feed.entry ? data.feed.entry : [];
-            storyCache = storyCache.concat(entries.map(feedEntryToStory).filter(function (s) { return s.title; }));
+            var fresh = entries.map(feedEntryToStory).filter(function (s) { return s.title; });
+            fresh.forEach(function (story) {
+              if (!storyCache.some(function (old) { return old.url === story.url; })) storyCache.push(story);
+            });
             feedStartIndex += entries.length;
             if (entries.length < batch) feedLoadedAll = true;
             done(storyCache);
@@ -379,6 +410,7 @@
         }
 
         function renderHome() {
+          if (isDetailPage) return;
           var grid = qs('#pfmStoryGrid'); if (!grid) return;
           fetchStories(function (stories) {
             fillSelect('#pfmFilterGenre', stories, 'genre', 'All Genres');
@@ -406,10 +438,23 @@
           });
         }
 
-        function renderDetail() {
-          var page = qs('.pfm-story-page'); if (!page) return;
-          var source = qs('.pfm-source', page);
-          var story = normalizeStory(extractJsonFromHtml(source ? source.innerHTML : ''), { title: qs('#pfmDetailTitle') ? qs('#pfmDetailTitle').textContent : '', url: page.getAttribute('data-post-url') });
+        function sameUrl(a, b) {
+          function clean(u) { return String(u || '').replace(/^http:/, 'https:').replace(/\?.*$/, '').replace(/#.*$/, '').replace(/\/$/, ''); }
+          return clean(a) && clean(a) === clean(b);
+        }
+
+        function storyFromBridge() {
+          var bridge = qs('.pfm-current-post-data');
+          if (!bridge) return null;
+          var source = qs('.pfm-source', bridge);
+          return normalizeStory(extractJsonFromHtml(source ? source.innerHTML : ''), {
+            title: bridge.getAttribute('data-post-title') || settings.PAGE_NAME || '',
+            url: bridge.getAttribute('data-post-url') || settings.CURRENT_URL || location.href
+          });
+        }
+
+        function paintDetail(story) {
+          story = normalizeStory(story, { title: settings.PAGE_NAME || document.title, url: settings.CURRENT_URL || location.href });
           var img = qs('#pfmDetailPoster'); if (img) { img.src = posterUrl(story.poster); img.alt = story.title + ' poster'; }
           var title = qs('#pfmDetailTitle'); if (title) title.textContent = story.title;
           var meta = qs('#pfmDetailMeta'); if (meta) meta.innerHTML = [story.genre, story.subGenre, story.language, story.status].filter(Boolean).map(function (x) { return '<span class="pfm-pill">' + safe(x) + '</span>'; }).join('');
@@ -426,9 +471,21 @@
           }
           addSchema(story);
           fetchStories(function (stories) {
-            var related = stories.filter(function (s) { return s.url !== story.url && story.voiceArtist && s.voiceArtist === story.voiceArtist; }).slice(0, 18);
+            var related = stories.filter(function (s) { return !sameUrl(s.url, story.url) && story.voiceArtist && s.voiceArtist === story.voiceArtist; }).slice(0, 18);
             var wrap = qs('#pfmRelatedStories');
             if (wrap) wrap.innerHTML = related.length ? related.map(cardHtml).join('') : '<div class="pfm-empty">No more stories found for this voice artist yet.</div>';
+          });
+        }
+
+        function renderDetail() {
+          if (!isDetailPage) return;
+          var direct = storyFromBridge();
+          if (direct && (direct.poster || direct.description || direct.pocketUrl)) { paintDetail(direct); return; }
+          fetchStories(function (stories) {
+            var current = settings.CURRENT_URL || location.href;
+            var pageName = slug(settings.PAGE_NAME || document.title.replace(/\s*\|.*$/, ''));
+            var found = stories.filter(function (s) { return sameUrl(s.url, current); })[0] || stories.filter(function (s) { return slug(s.title) === pageName; })[0];
+            paintDetail(found || direct || null);
           });
         }
 
@@ -443,8 +500,17 @@
           [schema, bread].forEach(function (obj) { var s = document.createElement('script'); s.type = 'application/ld+json'; s.text = JSON.stringify(obj); document.head.appendChild(s); });
         }
 
+        function setShellVisibility() {
+          var homeHero = qs('#pfmHomeHero');
+          var home = qs('#pfmHomeShell');
+          var detail = qs('#pfmDetailShell');
+          if (homeHero) homeHero.hidden = isDetailPage;
+          if (home) home.hidden = isDetailPage;
+          if (detail) detail.hidden = !isDetailPage;
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
-          initTheme(); initMenu(); addFilterListeners(); renderHome(); renderDetail();
+          setShellVisibility(); initTheme(); initMenu(); addFilterListeners(); renderHome(); renderDetail();
         });
       }());
     ]]></script>
