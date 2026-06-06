@@ -46,9 +46,31 @@ Blogger can strip or rewrite `<script>` tags inside posts on some accounts/edito
 </pre>
 ```
 
+### Marker format for raw Blogger content
+
+The story page and homepage parser both support metadata stored between `STORY_DATA_START` and `STORY_DATA_END`. This is useful when you want to paste readable metadata directly into a Blogger post without relying on hidden HTML wrappers:
+
+```text
+STORY_DATA_START
+{
+  "storyName": "The Royal Contract",
+  "posterUrl": "https://example.com/poster.jpg",
+  "pocketFmUrl": "https://www.pocketfm.com/show/example-story",
+  "genre": "Romance",
+  "subGenre": "Royal Romance",
+  "language": "English",
+  "voiceArtist": "Rahul Sharma",
+  "status": "Ongoing",
+  "episodes": "128",
+  "author": "A. Writer",
+  "description": "A short SEO-friendly description of the story."
+}
+STORY_DATA_END
+```
+
 ### Raw JSON fallback
 
-If you already pasted only the JSON into the Blogger post body, the updated template can also read that. The parser now searches the post body text for the first `{ ... }` JSON object, so this also works:
+If you already pasted only the JSON into the Blogger post body, the updated template can also read that. The parser searches the post body text for the first `{ ... }` JSON object, so this also works:
 
 ```json
 {

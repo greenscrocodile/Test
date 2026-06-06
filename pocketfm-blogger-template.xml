@@ -394,6 +394,65 @@ function parseStoryMetadata(html, fallbackTitle, fallbackUrl) {
   };
 }
 
+function getFeedEntryAlternateUrl(entry) {
+  return (entry.link || []).find(item => item.rel === 'alternate')?.href || '#';
+}
+
+function storyFromFeedEntry(entry) {
+  const title = decodeHtml(entry.title?.$t || 'Untitled Story');
+  const link = getFeedEntryAlternateUrl(entry);
+  const content = entry.content?.$t || entry.summary?.$t || '';
+  return parseStoryMetadata(content, title, link);
+}
+
+function comparableUrl(value) {
+  try {
+    const url = new URL(value, location.origin);
+    return `${url.origin}${url.pathname.replace(/\/$/, '')}`;
+  } catch (error) {
+    return normalize(value).replace(/\/$/, '');
+  }
+}
+
+function isCurrentPostStory(story) {
+  const canonical = document.querySelector('link[rel="canonical"]')?.href || location.href;
+  return comparableUrl(story.url) === comparableUrl(canonical) || comparableUrl(story.url) === comparableUrl(location.href);
+}
+
+async function fetchFeedEntries(feedUrl) {
+  const response = await fetch(feedUrl, { credentials: 'same-origin' });
+  if (!response.ok) throw new Error(`Feed request failed: ${response.status}`);
+  const payload = await response.json();
+  return payload.feed?.entry || [];
+}
+
+async function getCurrentPostMetadata() {
+  const fallbackTitle = $('.detail-title')?.textContent || document.title;
+  const canonical = document.querySelector('link[rel="canonical"]')?.href || location.href;
+  const currentPath = new URL(canonical, location.origin).pathname;
+  const directFeedUrl = `${getBlogBaseUrl()}feeds/posts/default?alt=json&path=${encodeURI(currentPath)}`;
+
+  try {
+    const directEntries = await fetchFeedEntries(directFeedUrl);
+    const directStories = directEntries.map(storyFromFeedEntry);
+    const directMatch = directStories.find(isCurrentPostStory) || directStories[0];
+    if (directMatch) return directMatch;
+  } catch (error) {
+    console.warn('Direct current-post feed lookup failed; trying batched feed fallback.', error);
+  }
+
+  while (!appState.loadedAll) {
+    await fetchStoriesBatch();
+    const currentMatch = appState.stories.find(isCurrentPostStory);
+    if (currentMatch) return currentMatch;
+  }
+
+  const titleMatch = appState.stories.find(story => story.title === fallbackTitle);
+  if (titleMatch) return titleMatch;
+
+  throw new Error(`Current story metadata was not found in the Blogger feed for ${canonical}`);
+}
+
 async function fetchStoriesBatch() {
   if (appState.loadedAll) return [];
   const feedUrl = `${getBlogBaseUrl()}feeds/posts/default?alt=json&max-results=${POCKETFM_CONFIG.FEED_BATCH_SIZE}&start-index=${appState.nextIndex}`;
@@ -401,12 +460,7 @@ async function fetchStoriesBatch() {
   if (!response.ok) throw new Error(`Feed request failed: ${response.status}`);
   const payload = await response.json();
   const entries = payload.feed?.entry || [];
-  const stories = entries.map(entry => {
-    const title = decodeHtml(entry.title?.$t || 'Untitled Story');
-    const link = (entry.link || []).find(item => item.rel === 'alternate')?.href || '#';
-    const content = entry.content?.$t || entry.summary?.$t || '';
-    return parseStoryMetadata(content, title, link);
-  });
+  const stories = entries.map(storyFromFeedEntry);
   appState.nextIndex += entries.length;
   if (entries.length < POCKETFM_CONFIG.FEED_BATCH_SIZE) appState.loadedAll = true;
   appState.stories.push(...stories);
@@ -508,12 +562,6 @@ function initIndexPage() {
   });
 }
 
-function getCurrentPostMetadata() {
-  const body = $('.post-body');
-  const title = $('.detail-title')?.textContent || document.title;
-  return parseStoryMetadata(body?.innerHTML || '', title, location.href);
-}
-
 function renderDetailInfo(story) {
   $('#detailPoster').src = story.poster || POCKETFM_CONFIG.PLACEHOLDER_POSTER;
   $('#detailPoster').alt = `${story.title} poster`;
@@ -568,11 +616,18 @@ async function renderRelatedStories(currentStory) {
   }
 }
 
-function initDetailPage() {
+async function initDetailPage() {
   if (!$('#storyDetail')) return;
-  const story = getCurrentPostMetadata();
-  renderDetailInfo(story);
-  renderRelatedStories(story);
+  try {
+    const story = await getCurrentPostMetadata();
+    renderDetailInfo(story);
+    renderRelatedStories(story);
+  } catch (error) {
+    console.error(error);
+    $('#detailDescription').textContent = 'Story metadata could not be loaded. Make sure the post contains STORY_DATA_START and STORY_DATA_END metadata and that the Blogger site feed includes full post content.';
+    $('#pocketButton').style.display = 'none';
+    $('#relatedStories').innerHTML = '<div class="empty-state">Related stories could not be loaded.</div>';
+  }
 }
 
 function initNavigation() {
