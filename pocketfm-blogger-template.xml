@@ -324,21 +324,55 @@ function decodeHtml(html) {
   return doc.documentElement.textContent || '';
 }
 
+function cleanJsonText(value) {
+  return decodeHtml(value)
+    .replace(/\u00a0/g, ' ')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/,\s*([}\]])/g, '$1')
+    .trim();
+}
+
+function extractJsonFromText(value) {
+  const text = cleanJsonText(value);
+  const storyDataMatch = text.match(/STORY_DATA_START([\s\S]*?)STORY_DATA_END/i);
+  if (storyDataMatch) return storyDataMatch[1].trim();
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) return text.slice(firstBrace, lastBrace + 1).trim();
+  return '';
+}
+
+function parseJsonCandidate(raw, fallbackTitle) {
+  const candidate = extractJsonFromText(raw);
+  if (!candidate) return null;
+  try {
+    return JSON.parse(candidate);
+  } catch (error) {
+    console.warn('Invalid story metadata JSON for', fallbackTitle, error, candidate);
+    return null;
+  }
+}
+
 function parseStoryMetadata(html, fallbackTitle, fallbackUrl) {
   const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
-  let raw = '';
-  const jsonBlock = doc.querySelector('#story-data, script[type="application/json"][data-story]');
-  if (jsonBlock) raw = jsonBlock.textContent;
-  if (!raw) {
-    const pre = doc.querySelector('[data-story-json], .story-json');
-    if (pre) raw = pre.textContent;
-  }
+  const candidates = [];
+  doc.querySelectorAll('#story-data, script[type="application/json"][data-story], template[data-story-json], [data-story-json], .story-json, textarea.story-json, pre.story-json').forEach(node => {
+    candidates.push(node.textContent || node.innerHTML || '');
+  });
+  candidates.push(doc.body?.textContent || '');
+  candidates.push(String(html || ''));
   let data = {};
-  if (raw) {
-    try { data = JSON.parse(raw); } catch (error) { console.warn('Invalid story metadata JSON for', fallbackTitle, error); }
+  for (const candidate of candidates) {
+    const parsed = parseJsonCandidate(candidate, fallbackTitle);
+    if (parsed && typeof parsed === 'object') {
+      data = parsed;
+      break;
+    }
   }
   const firstImage = doc.querySelector('img');
-  const description = data.description || doc.querySelector('[data-description]')?.textContent || doc.body.textContent.slice(0, 220);
+  const plainBodyText = (doc.body?.textContent || '').replace(/STORY_DATA_START[\s\S]*?STORY_DATA_END/i, '').trim();
+  const description = data.description || doc.querySelector('[data-description]')?.textContent || plainBodyText.slice(0, 220);
   return {
     title: normalize(data.storyName || data.name || fallbackTitle),
     poster: normalize(data.posterUrl || data.posterURL || data.poster || firstImage?.getAttribute('src') || POCKETFM_CONFIG.PLACEHOLDER_POSTER),

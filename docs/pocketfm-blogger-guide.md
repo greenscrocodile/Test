@@ -13,15 +13,19 @@ The template creates an unofficial Pocket FM story information website. It does 
 3. Back up the existing template.
 4. Paste the full contents of `pocketfm-blogger-template.xml`.
 5. Save the theme.
-6. In **Settings**, keep the blog feed enabled so the homepage JavaScript can read Blogger posts.
+6. In **Settings**, set **Site feed** to **Full** (or at least make sure post contents are included) so the homepage JavaScript can read story metadata from Blogger posts.
 7. Create static Blogger pages for `/p/about.html` and `/p/contact.html`, or update the navbar links in the XML.
 
 ## Required Blogger Post Metadata Structure
 
 Each story is one Blogger post. Put the metadata block at the top of the post in **HTML view**. Edit values only; keep JSON keys unchanged when possible.
 
+### Recommended Blogger-safe format
+
+Blogger can strip or rewrite `<script>` tags inside posts on some accounts/editors. For that reason, the safest format is a hidden `<pre>` block:
+
 ```html
-<script type="application/json" id="story-data" data-story>
+<pre class="story-json" style="display:none">
 {
   "storyName": "The Royal Contract",
   "posterUrl": "https://example.com/poster.jpg",
@@ -39,10 +43,30 @@ Each story is one Blogger post. Put the metadata block at the top of the post in
   "rating": "4.7",
   "tags": ["romance", "drama", "royal"]
 }
-</script>
+</pre>
 ```
 
-You may add normal article text after the JSON block. The template uses the JSON block for cards, filters, search, related stories, and detail-page fields.
+### Raw JSON fallback
+
+If you already pasted only the JSON into the Blogger post body, the updated template can also read that. The parser now searches the post body text for the first `{ ... }` JSON object, so this also works:
+
+```json
+{
+  "storyName": "The Royal Contract",
+  "posterUrl": "https://example.com/poster.jpg",
+  "pocketFmUrl": "https://www.pocketfm.com/show/example-story",
+  "genre": "Romance",
+  "subGenre": "Royal Romance",
+  "language": "English",
+  "voiceArtist": "Rahul Sharma",
+  "status": "Ongoing",
+  "episodes": "128",
+  "author": "A. Writer",
+  "description": "A short SEO-friendly description of the story."
+}
+```
+
+You may add normal article text after the JSON block. The template uses the JSON block for cards, filters, search, related stories, and detail-page fields. If the detail template stays empty, check the browser console for an `Invalid story metadata JSON` warning and verify that the post uses straight double quotes (`"`) instead of curly quotes.
 
 ## Admin Guide
 
@@ -50,7 +74,7 @@ You may add normal article text after the JSON block. The template uses the JSON
 
 1. Create a new Blogger post.
 2. Switch to HTML view.
-3. Paste the metadata JSON block.
+3. Paste the recommended hidden `<pre class="story-json">` metadata block, or paste the raw JSON block if you prefer the fallback format.
 4. Fill in the story values.
 5. Add any extra editorial text below the metadata if desired.
 6. Add labels such as `Genre`, `Romance`, `Voice Artist`, `Completed`, or `Ongoing` to support Blogger label URLs.
