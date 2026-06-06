@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html>
+<html b:css='false' b:defaultwidgetversion='2' b:layoutsVersion='3' b:responsive='true' expr:dir='data:blog.languageDirection' expr:lang='data:blog.locale' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/2005/gml/b' xmlns:data='http://www.google.com/2005/gml/data' xmlns:expr='http://www.google.com/2005/gml/expr'>
+  <head>
+    <meta charset='UTF-8'/>
+    <meta content='width=device-width, initial-scale=1, viewport-fit=cover' name='viewport'/>
+    <meta content='IE=edge' http-equiv='X-UA-Compatible'/>
+    <b:if cond='data:view.isPost'>
+      <title><data:blog.pageName/> | <data:blog.title/></title>
+      <meta expr:content='data:blog.pageName + &quot; story information, genre, voice artist, episodes, status and official Pocket FM link.&quot;' name='description'/>
+    <b:elseif cond='data:view.isSearch'/>
+      <title><data:blog.searchLabel/> Stories | <data:blog.title/></title>
+      <meta expr:content='&quot;Browse &quot; + data:blog.searchLabel + &quot; Pocket FM story information, voice artists, genres and official Pocket FM links.&quot;' name='description'/>
+    <b:else/>
+      <title><data:blog.title/> - Pocket FM Story Information Database</title>
+      <meta expr:content='data:blog.metaDescription ? data:blog.metaDescription : &quot;Search and discover Pocket FM stories by genre, voice artist, language, status and episodes. This fan information site redirects listeners to official Pocket FM pages.&quot;' name='description'/>
+    </b:if>
+    <meta content='index, follow, max-image-preview:large' name='robots'/>
+    <link expr:href='data:blog.canonicalUrl' rel='canonical'/>
+    <meta expr:content='data:blog.title' property='og:site_name'/>
+    <meta expr:content='data:blog.pageName ? data:blog.pageName : data:blog.title' property='og:title'/>
+    <meta expr:content='data:blog.canonicalUrl' property='og:url'/>
+    <meta content='website' property='og:type'/>
+    <meta content='summary_large_image' name='twitter:card'/>
+    <meta expr:content='data:blog.pageName ? data:blog.pageName : data:blog.title' name='twitter:title'/>
+
+    <!-- Global admin settings. Change these once; every story page updates automatically. -->
+    <script>
+      window.PFM_SETTINGS = {
+        SHOW_POCKETFM_BUTTON: true,
+        SITE_NAME: '<data:blog.title/>',
+        HOME_URL: '<data:blog.homepageUrl/>',
+        FEED_BATCH_SIZE: 150,
+        INITIAL_CARD_LIMIT: 24,
+        LOAD_MORE_SIZE: 24,
+        DEFAULT_POSTER: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj-placeholder-pocketfm/s512/default-poster.png',
+        OFFICIAL_BUTTON_TEXT: 'Listen on Pocket FM'
+      };
+    </script>
+
+    <b:skin><![CDATA[
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fc;
+        --bg-soft: #ffffff;
+        --surface: rgba(255, 255, 255, .82);
+        --surface-strong: #ffffff;
+        --text: #121525;
+        --muted: #626b83;
+        --line: rgba(24, 28, 45, .11);
+        --brand: #ff4d6d;
+        --brand-2: #7c3cff;
+        --brand-3: #00c2ff;
+        --accent: #ffb703;
+        --shadow: 0 18px 55px rgba(24, 28, 45, .13);
+        --shadow-soft: 0 10px 30px rgba(24, 28, 45, .08);
+        --radius-xl: 30px;
+        --radius-lg: 22px;
+        --radius-md: 16px;
+        --nav-h: 74px;
+        --max: 1180px;
+      }
+      [data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #090b14;
+        --bg-soft: #0f1322;
+        --surface: rgba(16, 20, 34, .82);
+        --surface-strong: #151a2d;
+        --text: #f7f8ff;
+        --muted: #a7b0c7;
+        --line: rgba(255, 255, 255, .11);
+        --shadow: 0 18px 60px rgba(0, 0, 0, .38);
+        --shadow-soft: 0 10px 30px rgba(0, 0, 0, .24);
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(124, 60, 255, .20), transparent 34rem),
+          radial-gradient(circle at 85% 8%, rgba(255, 77, 109, .18), transparent 30rem),
+          var(--bg);
+        color: var(--text);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.6;
+        transition: background .25s ease, color .25s ease;
+      }
+      a { color: inherit; text-decoration: none; }
+      img { display: block; max-width: 100%; }
+      button, input, select { font: inherit; }
+      .pfm-container { width: min(var(--max), calc(100% - 32px)); margin: 0 auto; }
+      .pfm-nav {
+        position: fixed; inset: 0 0 auto 0; height: var(--nav-h); z-index: 999;
+        backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+        background: color-mix(in srgb, var(--surface) 88%, transparent);
+        border-bottom: 1px solid var(--line);
+      }
+      .pfm-nav__inner { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+      .pfm-logo { display: inline-flex; align-items: center; gap: 12px; font-weight: 900; letter-spacing: -.04em; font-size: 1.25rem; }
+      .pfm-logo__mark { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 12px 24px rgba(255, 77, 109, .28); }
+      .pfm-menu { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+      .pfm-menu a { padding: 10px 12px; border-radius: 999px; color: var(--muted); font-weight: 750; font-size: .94rem; transition: .2s ease; }
+      .pfm-menu a:hover { color: var(--text); background: color-mix(in srgb, var(--brand) 12%, transparent); }
+      .pfm-theme, .pfm-hamburger { border: 1px solid var(--line); background: var(--surface-strong); color: var(--text); cursor: pointer; box-shadow: var(--shadow-soft); }
+      .pfm-theme { min-width: 54px; height: 38px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: space-around; padding: 0 8px; }
+      .pfm-theme__sun, .pfm-theme__moon { transition: transform .22s ease, opacity .22s ease; }
+      [data-theme="dark"] .pfm-theme__sun, :root:not([data-theme="dark"]) .pfm-theme__moon { opacity: .35; transform: scale(.84); }
+      .pfm-hamburger { display: none; width: 42px; height: 42px; border-radius: 14px; place-items: center; }
+      .pfm-hamburger span { width: 18px; height: 2px; border-radius: 4px; background: var(--text); display: block; position: relative; }
+      .pfm-hamburger span:before, .pfm-hamburger span:after { content: ""; position: absolute; left: 0; width: 18px; height: 2px; border-radius: 4px; background: var(--text); transition: .2s; }
+      .pfm-hamburger span:before { top: -6px; } .pfm-hamburger span:after { top: 6px; }
+      .pfm-main { padding-top: calc(var(--nav-h) + 28px); }
+      .pfm-hero { padding: 48px 0 28px; }
+      .pfm-hero__card { border: 1px solid var(--line); border-radius: var(--radius-xl); padding: clamp(24px, 5vw, 54px); background: linear-gradient(135deg, color-mix(in srgb, var(--surface-strong) 85%, transparent), color-mix(in srgb, var(--brand-2) 8%, var(--surface))); box-shadow: var(--shadow); overflow: hidden; position: relative; }
+      .pfm-hero__card:after { content: ""; position: absolute; width: 250px; height: 250px; right: -60px; top: -80px; background: radial-gradient(circle, rgba(255, 77, 109, .32), transparent 70%); }
+      .pfm-kicker { display: inline-flex; gap: 8px; align-items: center; color: var(--brand); font-weight: 900; letter-spacing: .08em; text-transform: uppercase; font-size: .78rem; }
+      .pfm-hero h1 { margin: 12px 0; font-size: clamp(2rem, 6vw, 4.7rem); line-height: .96; letter-spacing: -.07em; max-width: 780px; }
+      .pfm-hero p { margin: 0; color: var(--muted); max-width: 700px; font-size: clamp(1rem, 2.3vw, 1.18rem); }
+      .pfm-toolbar { position: sticky; top: calc(var(--nav-h) + 10px); z-index: 30; margin: 18px 0 26px; padding: 14px; border: 1px solid var(--line); background: var(--surface); backdrop-filter: blur(16px); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
+      .pfm-search { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); background: var(--surface-strong); border-radius: 18px; padding: 0 14px; }
+      .pfm-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); min-height: 48px; }
+      .pfm-filter-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 12px; }
+      .pfm-filter-row select { min-width: 0; border: 1px solid var(--line); border-radius: 14px; padding: 11px 12px; background: var(--surface-strong); color: var(--text); }
+      .pfm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: clamp(14px, 2.5vw, 24px); }
+      .pfm-card { border: 1px solid var(--line); border-radius: 24px; overflow: hidden; background: var(--surface-strong); box-shadow: var(--shadow-soft); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+      .pfm-card:hover { transform: translateY(-7px); box-shadow: var(--shadow); border-color: color-mix(in srgb, var(--brand) 38%, var(--line)); }
+      .pfm-card__poster { aspect-ratio: 1 / 1; background: linear-gradient(135deg, rgba(124, 60, 255, .18), rgba(255, 77, 109, .18)); overflow: hidden; }
+      .pfm-card__poster img { width: 100%; height: 100%; object-fit: cover; }
+      .pfm-card__body { min-height: 76px; padding: 14px; display: flex; align-items: center; }
+      .pfm-card__title { font-weight: 900; letter-spacing: -.025em; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .pfm-empty { padding: 34px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius-lg); }
+      .pfm-load { display: flex; justify-content: center; gap: 12px; margin: 34px 0; }
+      .pfm-btn { border: 0; cursor: pointer; border-radius: 999px; padding: 14px 22px; font-weight: 900; color: #fff; background: linear-gradient(135deg, var(--brand), var(--brand-2)); box-shadow: 0 16px 30px rgba(124, 60, 255, .25); transition: .2s ease; }
+      .pfm-btn:hover { transform: translateY(-2px); }
+      .pfm-detail { display: grid; grid-template-columns: minmax(220px, 360px) 1fr; gap: clamp(22px, 4vw, 46px); padding: 30px; border: 1px solid var(--line); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow); }
+      .pfm-detail__poster { aspect-ratio: 1 / 1; border-radius: 28px; overflow: hidden; background: var(--surface-strong); box-shadow: var(--shadow-soft); }
+      .pfm-detail__poster img { width: 100%; height: 100%; object-fit: cover; }
+      .pfm-detail h1 { margin: 0 0 14px; font-size: clamp(2rem, 5vw, 4rem); line-height: 1; letter-spacing: -.06em; }
+      .pfm-meta { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 22px; }
+      .pfm-pill { border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; background: var(--surface-strong); color: var(--muted); font-weight: 800; font-size: .9rem; }
+      .pfm-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+      .pfm-info div { padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--surface-strong) 80%, transparent); }
+      .pfm-info strong { display: block; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+      .pfm-desc { color: var(--muted); font-size: 1.05rem; }
+      .pfm-pocket { display: inline-flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; min-width: 230px; }
+      .pfm-section-title { margin: 46px 0 18px; font-size: clamp(1.5rem, 4vw, 2.4rem); letter-spacing: -.045em; }
+      .pfm-related { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(150px, 190px); gap: 16px; overflow-x: auto; padding: 4px 2px 18px; scroll-snap-type: x mandatory; }
+      .pfm-related .pfm-card { scroll-snap-align: start; }
+      .pfm-footer { margin-top: 60px; padding: 32px 0; border-top: 1px solid var(--line); color: var(--muted); }
+      .blog-posts, .post-outer, .post, .post-body { margin: 0 !important; padding: 0 !important; }
+      .post-title, .post-header, .post-footer, .blog-pager, .comments, #comments { display: none !important; }
+      @media (max-width: 880px) {
+        .pfm-menu { position: fixed; top: var(--nav-h); left: 16px; right: 16px; display: grid; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface-strong); box-shadow: var(--shadow); transform: translateY(-18px); opacity: 0; pointer-events: none; transition: .22s ease; }
+        .pfm-menu.is-open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        .pfm-menu a { padding: 13px 14px; }
+        .pfm-hamburger { display: grid; }
+        .pfm-filter-row { grid-template-columns: 1fr; }
+        .pfm-detail { grid-template-columns: 1fr; padding: 18px; }
+        .pfm-detail__poster { max-width: 380px; width: 100%; margin: 0 auto; }
+      }
+      @media (max-width: 520px) {
+        .pfm-container { width: min(100% - 22px, var(--max)); }
+        .pfm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .pfm-card { border-radius: 18px; }
+        .pfm-card__body { min-height: 68px; padding: 11px; }
+        .pfm-info { grid-template-columns: 1fr; }
+        .pfm-hero { padding-top: 24px; }
+      }
+    ]]></b:skin>
+  </head>
+  <body>
+    <nav class='pfm-nav' role='navigation'>
+      <div class='pfm-container pfm-nav__inner'>
+        <a class='pfm-logo' expr:href='data:blog.homepageUrl' aria-label='Home'>
+          <span class='pfm-logo__mark'>▶</span><span><data:blog.title/></span>
+        </a>
+        <div class='pfm-menu' id='pfmMenu'>
+          <a expr:href='data:blog.homepageUrl'>Home</a>
+          <a expr:href='data:blog.homepageUrl + &quot;search/label/Genre&quot;'>Genres</a>
+          <a expr:href='data:blog.homepageUrl + &quot;search/label/Voice%20Artist&quot;'>Voice Artists</a>
+          <a expr:href='data:blog.homepageUrl + &quot;search/label/Completed&quot;'>Completed Stories</a>
+          <a expr:href='data:blog.homepageUrl + &quot;search/label/Ongoing&quot;'>Ongoing Stories</a>
+          <a expr:href='data:blog.homepageUrl + &quot;p/about.html&quot;'>About</a>
+          <a expr:href='data:blog.homepageUrl + &quot;p/contact.html&quot;'>Contact</a>
+        </div>
+        <button class='pfm-theme' id='pfmThemeToggle' type='button' aria-label='Toggle light and dark theme' title='Toggle theme'><span class='pfm-theme__sun'>☀</span><span class='pfm-theme__moon'>☾</span></button>
+        <button class='pfm-hamburger' id='pfmHamburger' type='button' aria-label='Open menu' aria-controls='pfmMenu'><span></span></button>
+      </div>
+    </nav>
+
+    <main class='pfm-main'>
+      <b:section class='main' id='main' maxwidgets='1' showaddelement='false'>
+        <b:widget id='Blog1' locked='true' title='Blog Posts' type='Blog' version='2' visible='true'>
+          <b:includable id='main'>
+            <b:if cond='data:view.isPost'>
+              <b:loop values='data:posts' var='post'>
+                <article class='pfm-container pfm-story-page' expr:data-post-url='data:post.url'>
+                  <div class='pfm-source' hidden='hidden'><data:post.body/></div>
+                  <div id='pfmStoryDetail' class='pfm-detail' data-loading='true'>
+                    <div class='pfm-detail__poster'><img alt='' loading='eager' id='pfmDetailPoster'/></div>
+                    <div>
+                      <span class='pfm-kicker'>Pocket FM Story</span>
+                      <h1 id='pfmDetailTitle'><data:post.title/></h1>
+                      <div class='pfm-meta' id='pfmDetailMeta'></div>
+                      <div class='pfm-info' id='pfmDetailInfo'></div>
+                      <p class='pfm-desc' id='pfmDetailDescription'></p>
+                      <a class='pfm-btn pfm-pocket' id='pfmPocketButton' target='_blank' rel='noopener sponsored nofollow'>Listen on Pocket FM</a>
+                    </div>
+                  </div>
+                  <h2 class='pfm-section-title'>More Stories By Same Voice Artist</h2>
+                  <div class='pfm-related' id='pfmRelatedStories' aria-label='Related stories'></div>
+                </article>
+              </b:loop>
+            <b:else/>
+              <section class='pfm-hero pfm-container'>
+                <div class='pfm-hero__card'>
+                  <span class='pfm-kicker'>Searchable Story Guide</span>
+                  <h1>Discover stylish Pocket FM story information.</h1>
+                  <p>Browse stories, filter by genre, language, voice artist and status, then continue to the official Pocket FM story page. No audio files are hosted here.</p>
+                </div>
+              </section>
+              <section class='pfm-container'>
+                <div class='pfm-toolbar'>
+                  <label class='pfm-search' for='pfmSearchInput'><span>⌕</span><input id='pfmSearchInput' type='search' placeholder='Search by story name, voice artist, or genre...' autocomplete='off'/></label>
+                  <div class='pfm-filter-row'>
+                    <select id='pfmFilterGenre'><option value=''>All Genres</option></select>
+                    <select id='pfmFilterSubGenre'><option value=''>All Sub Genres</option></select>
+                    <select id='pfmFilterArtist'><option value=''>All Voice Artists</option></select>
+                    <select id='pfmFilterStatus'><option value=''>All Statuses</option></select>
+                    <select id='pfmFilterLanguage'><option value=''>All Languages</option></select>
+                  </div>
+                </div>
+                <div class='pfm-grid' id='pfmStoryGrid' aria-live='polite'></div>
+                <div class='pfm-load'><button class='pfm-btn' id='pfmLoadMore' type='button'>Load More</button></div>
+              </section>
+            </b:if>
+          </b:includable>
+        </b:widget>
+      </b:section>
+    </main>
+
+    <footer class='pfm-footer'>
+      <div class='pfm-container'>
+        <strong><data:blog.title/></strong><br/>
+        Independent story information website. Audio is not hosted here; official listening happens on Pocket FM.
+      </div>
+    </footer>
+
+    <script><![CDATA[
+      (function () {
+        'use strict';
+        var settings = window.PFM_SETTINGS || {};
+        var homeUrl = String(settings.HOME_URL || (location.origin + '/')).replace(/\/$/, '/');
+        var storyCache = [];
+        var visibleCount = settings.INITIAL_CARD_LIMIT || 24;
+        var feedLoadedAll = false;
+        var feedStartIndex = 1;
+
+        function qs(sel, root) { return (root || document).querySelector(sel); }
+        function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+        function slug(v) { return String(v || '').toLowerCase().trim(); }
+        function safe(v) { return String(v || '').replace(/[&<>"']/g, function (m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]; }); }
+        function posterUrl(url) { return url || settings.DEFAULT_POSTER || ''; }
+
+        function initTheme() {
+          var stored = localStorage.getItem('pfm-theme');
+          var preferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', stored || preferred);
+          var btn = qs('#pfmThemeToggle');
+          if (btn) btn.addEventListener('click', function () {
+            var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('pfm-theme', next);
+          });
+        }
+
+        function initMenu() {
+          var btn = qs('#pfmHamburger');
+          var menu = qs('#pfmMenu');
+          if (!btn || !menu) return;
+          btn.addEventListener('click', function () { menu.classList.toggle('is-open'); });
+          qsa('a', menu).forEach(function (a) { a.addEventListener('click', function () { menu.classList.remove('is-open'); }); });
+        }
+
+        function extractJsonFromHtml(html) {
+          if (!html) return null;
+          var wrap = document.createElement('div');
+          wrap.innerHTML = html;
+          var jsonNode = wrap.querySelector('script[type="application/json"].story-json, script[type="application/ld+json"].story-json, pre.story-json, textarea.story-json');
+          var raw = jsonNode ? (jsonNode.textContent || jsonNode.value || '') : '';
+          if (!raw) {
+            var match = html.match(/<!--\s*STORY_JSON\s*([\s\S]*?)\s*END_STORY_JSON\s*-->/i);
+            raw = match ? match[1] : '';
+          }
+          if (!raw) return null;
+          try { return JSON.parse(raw.trim()); } catch (e) { console.warn('Invalid story JSON', e); return null; }
+        }
+
+        function normalizeStory(meta, fallback) {
+          meta = meta || {};
+          fallback = fallback || {};
+          return {
+            title: meta.storyName || meta.name || fallback.title || '',
+            poster: meta.posterUrl || meta.posterURL || meta.poster || fallback.poster || '',
+            pocketUrl: meta.pocketFmUrl || meta.pocketFMUrl || meta.pocketUrl || meta.officialUrl || '',
+            genre: meta.genre || '',
+            subGenre: meta.subGenre || meta.subgenre || '',
+            language: meta.language || '',
+            voiceArtist: meta.voiceArtist || meta.narrator || '',
+            status: meta.status || '',
+            episodes: meta.episodes || '',
+            author: meta.author || '',
+            description: meta.description || fallback.summary || '',
+            releaseYear: meta.releaseYear || '',
+            listeningHours: meta.totalListeningHours || meta.listeningHours || '',
+            rating: meta.rating || '',
+            tags: Array.isArray(meta.tags) ? meta.tags : String(meta.tags || '').split(',').map(function (t) { return t.trim(); }).filter(Boolean),
+            url: fallback.url || meta.url || ''
+          };
+        }
+
+        function feedEntryToStory(entry) {
+          var title = entry.title && entry.title.$t ? entry.title.$t : '';
+          var content = entry.content && entry.content.$t ? entry.content.$t : '';
+          var link = (entry.link || []).filter(function (l) { return l.rel === 'alternate'; })[0];
+          var thumb = entry.media$thumbnail ? entry.media$thumbnail.url.replace(/\/s\d+(-c)?\//, '/s512/') : '';
+          return normalizeStory(extractJsonFromHtml(content), { title: title, url: link ? link.href : '', poster: thumb, summary: entry.summary ? entry.summary.$t : '' });
+        }
+
+        function fetchStories(done) {
+          if (feedLoadedAll) { done(storyCache); return; }
+          var batch = settings.FEED_BATCH_SIZE || 150;
+          var url = homeUrl + 'feeds/posts/default?alt=json&orderby=published&max-results=' + batch + '&start-index=' + feedStartIndex;
+          fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+            var entries = data.feed && data.feed.entry ? data.feed.entry : [];
+            storyCache = storyCache.concat(entries.map(feedEntryToStory).filter(function (s) { return s.title; }));
+            feedStartIndex += entries.length;
+            if (entries.length < batch) feedLoadedAll = true;
+            done(storyCache);
+          }).catch(function (err) {
+            console.warn('Story feed unavailable', err);
+            feedLoadedAll = true;
+            done(storyCache);
+          });
+        }
+
+        function cardHtml(story) {
+          return '<a class="pfm-card" href="' + safe(story.url) + '" data-genre="' + safe(story.genre) + '" data-artist="' + safe(story.voiceArtist) + '">' +
+            '<div class="pfm-card__poster"><img src="' + safe(posterUrl(story.poster)) + '" alt="' + safe(story.title) + ' poster" loading="lazy" width="512" height="512"/></div>' +
+            '<div class="pfm-card__body"><span class="pfm-card__title">' + safe(story.title) + '</span></div></a>';
+        }
+
+        function fillSelect(id, stories, key, label) {
+          var el = qs(id); if (!el) return;
+          var current = el.value;
+          var values = Array.from(new Set(stories.map(function (s) { return s[key]; }).filter(Boolean))).sort();
+          el.innerHTML = '<option value="">' + label + '</option>' + values.map(function (v) { return '<option value="' + safe(v) + '">' + safe(v) + '</option>'; }).join('');
+          el.value = values.indexOf(current) > -1 ? current : '';
+        }
+
+        function currentFilters() {
+          return {
+            q: slug(qs('#pfmSearchInput') && qs('#pfmSearchInput').value),
+            genre: qs('#pfmFilterGenre') && qs('#pfmFilterGenre').value,
+            subGenre: qs('#pfmFilterSubGenre') && qs('#pfmFilterSubGenre').value,
+            voiceArtist: qs('#pfmFilterArtist') && qs('#pfmFilterArtist').value,
+            status: qs('#pfmFilterStatus') && qs('#pfmFilterStatus').value,
+            language: qs('#pfmFilterLanguage') && qs('#pfmFilterLanguage').value
+          };
+        }
+
+        function filterStories(stories) {
+          var f = currentFilters();
+          return stories.filter(function (s) {
+            var hay = slug([s.title, s.voiceArtist, s.genre].join(' '));
+            return (!f.q || hay.indexOf(f.q) > -1) && (!f.genre || s.genre === f.genre) && (!f.subGenre || s.subGenre === f.subGenre) && (!f.voiceArtist || s.voiceArtist === f.voiceArtist) && (!f.status || s.status === f.status) && (!f.language || s.language === f.language);
+          });
+        }
+
+        function renderHome() {
+          var grid = qs('#pfmStoryGrid'); if (!grid) return;
+          fetchStories(function (stories) {
+            fillSelect('#pfmFilterGenre', stories, 'genre', 'All Genres');
+            fillSelect('#pfmFilterSubGenre', stories, 'subGenre', 'All Sub Genres');
+            fillSelect('#pfmFilterArtist', stories, 'voiceArtist', 'All Voice Artists');
+            fillSelect('#pfmFilterStatus', stories, 'status', 'All Statuses');
+            fillSelect('#pfmFilterLanguage', stories, 'language', 'All Languages');
+            var filtered = filterStories(stories);
+            var shown = filtered.slice(0, visibleCount);
+            grid.innerHTML = shown.length ? shown.map(cardHtml).join('') : '<div class="pfm-empty">No stories match your search or filters.</div>';
+            var load = qs('#pfmLoadMore');
+            if (load) load.style.display = (shown.length < filtered.length || !feedLoadedAll) ? 'inline-flex' : 'none';
+          });
+        }
+
+        function addFilterListeners() {
+          ['#pfmSearchInput','#pfmFilterGenre','#pfmFilterSubGenre','#pfmFilterArtist','#pfmFilterStatus','#pfmFilterLanguage'].forEach(function (id) {
+            var el = qs(id); if (!el) return;
+            el.addEventListener(id === '#pfmSearchInput' ? 'input' : 'change', function () { visibleCount = settings.INITIAL_CARD_LIMIT || 24; renderHome(); });
+          });
+          var load = qs('#pfmLoadMore');
+          if (load) load.addEventListener('click', function () {
+            visibleCount += settings.LOAD_MORE_SIZE || 24;
+            if (!feedLoadedAll) fetchStories(renderHome); else renderHome();
+          });
+        }
+
+        function renderDetail() {
+          var page = qs('.pfm-story-page'); if (!page) return;
+          var source = qs('.pfm-source', page);
+          var story = normalizeStory(extractJsonFromHtml(source ? source.innerHTML : ''), { title: qs('#pfmDetailTitle') ? qs('#pfmDetailTitle').textContent : '', url: page.getAttribute('data-post-url') });
+          var img = qs('#pfmDetailPoster'); if (img) { img.src = posterUrl(story.poster); img.alt = story.title + ' poster'; }
+          var title = qs('#pfmDetailTitle'); if (title) title.textContent = story.title;
+          var meta = qs('#pfmDetailMeta'); if (meta) meta.innerHTML = [story.genre, story.subGenre, story.language, story.status].filter(Boolean).map(function (x) { return '<span class="pfm-pill">' + safe(x) + '</span>'; }).join('');
+          var info = qs('#pfmDetailInfo');
+          if (info) info.innerHTML = [
+            ['Voice Artist', story.voiceArtist], ['Episodes', story.episodes], ['Author', story.author], ['Release Year', story.releaseYear], ['Rating', story.rating], ['Listening Hours', story.listeningHours]
+          ].filter(function (x) { return x[1]; }).map(function (x) { return '<div><strong>' + safe(x[0]) + '</strong><span>' + safe(x[1]) + '</span></div>'; }).join('');
+          var desc = qs('#pfmDetailDescription'); if (desc) desc.textContent = story.description || 'Story information will appear here after you fill the post JSON metadata.';
+          var btn = qs('#pfmPocketButton');
+          if (btn) {
+            btn.textContent = settings.OFFICIAL_BUTTON_TEXT || 'Listen on Pocket FM';
+            btn.href = story.pocketUrl || '#';
+            btn.style.display = (settings.SHOW_POCKETFM_BUTTON && story.pocketUrl) ? 'inline-flex' : 'none';
+          }
+          addSchema(story);
+          fetchStories(function (stories) {
+            var related = stories.filter(function (s) { return s.url !== story.url && story.voiceArtist && s.voiceArtist === story.voiceArtist; }).slice(0, 18);
+            var wrap = qs('#pfmRelatedStories');
+            if (wrap) wrap.innerHTML = related.length ? related.map(cardHtml).join('') : '<div class="pfm-empty">No more stories found for this voice artist yet.</div>';
+          });
+        }
+
+        function addSchema(story) {
+          if (!story || !story.title) return;
+          var schema = {
+            '@context': 'https://schema.org', '@type': 'CreativeWork', name: story.title, image: posterUrl(story.poster), description: story.description,
+            genre: [story.genre, story.subGenre].filter(Boolean).join(', '), inLanguage: story.language, author: story.author ? {'@type':'Person','name':story.author} : undefined,
+            narrator: story.voiceArtist ? {'@type':'Person','name':story.voiceArtist} : undefined, url: location.href, sameAs: story.pocketUrl || undefined
+          };
+          var bread = {'@context':'https://schema.org','@type':'BreadcrumbList','itemListElement':[{'@type':'ListItem','position':1,'name':'Home','item':homeUrl},{'@type':'ListItem','position':2,'name':story.title,'item':location.href}]};
+          [schema, bread].forEach(function (obj) { var s = document.createElement('script'); s.type = 'application/ld+json'; s.text = JSON.stringify(obj); document.head.appendChild(s); });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+          initTheme(); initMenu(); addFilterListeners(); renderHome(); renderDetail();
+        });
+      }());
+    ]]></script>
+  </body>
+</html>
