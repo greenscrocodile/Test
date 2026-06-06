@@ -5,7 +5,7 @@
   <meta charset='UTF-8'/>
   <meta content='width=device-width, initial-scale=1, viewport-fit=cover' name='viewport'/>
   <meta content='IE=edge' http-equiv='X-UA-Compatible'/>
-  <b:if cond='data:view.isSingleItem'>
+  <b:if cond='data:view.isPost'>
     <title><data:blog.pageName/> | <data:blog.title/></title>
     <meta expr:content='data:blog.metaDescription ? data:blog.metaDescription : data:blog.pageName + &quot; Pocket FM story details, genre, voice artist, episodes, status, and official listening link.&quot;' name='description'/>
     <meta expr:content='data:blog.pageName' property='og:title'/>
@@ -145,11 +145,18 @@ main { padding-top: var(--nav-height); }
 .info-label { display: block; color: var(--muted); font-size: .78rem; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
 .info-value { display: block; margin-top: .2rem; font-weight: 900; }
 .description { color: var(--muted); font-size: 1.03rem; }
+.static-page { padding: clamp(2rem, 6vw, 4rem) 0; }
+.page-content { color: var(--muted); font-size: 1.03rem; }
+.page-content a { color: var(--brand); font-weight: 800; }
 .pocket-btn { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; width: min(100%, 360px); margin-top: 1.2rem; border-radius: 18px; padding: 1rem 1.25rem; color: white; background: linear-gradient(135deg, var(--brand), var(--brand-dark)); font-weight: 1000; box-shadow: 0 14px 32px rgba(239,63,90,.28); }
 .related-section { padding: 0 0 4rem; }
 .section-title { margin: 0 0 1rem; font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -.04em; }
 .related-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(145px, 180px); gap: 1rem; overflow-x: auto; padding: .25rem .15rem 1rem; scroll-snap-type: x mandatory; }
 .related-row .story-card { scroll-snap-align: start; }
+[hidden] { display: none !important; }
+.directory-panel { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: .6rem; }
+.directory-chip { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px; padding: .55rem .8rem; font-weight: 900; cursor: pointer; box-shadow: 0 8px 20px rgba(15,23,42,.06); }
+.directory-chip:hover, .directory-chip:focus-visible { border-color: rgba(239,63,90,.55); transform: translateY(-1px); }
 .blog-posts, .post-footer, .comments, .feed-links, .blog-pager, .status-msg-wrap { display: none !important; }
 .footer { border-top: 1px solid var(--border); background: var(--surface); padding: 2rem 0; color: var(--muted); }
 .footer-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -184,10 +191,10 @@ main { padding-top: var(--nav-height); }
       <button aria-controls='navLinks' aria-expanded='false' class='nav-toggle' id='navToggle' type='button'>Menu</button>
       <ul class='nav-links' id='navLinks'>
         <li><a expr:href='data:blog.homepageUrl'>Home</a></li>
-        <li><a expr:href='data:blog.homepageUrl + &quot;search/label/Genre&quot;'>Genres</a></li>
-        <li><a expr:href='data:blog.homepageUrl + &quot;search/label/Voice%20Artist&quot;'>Voice Artists</a></li>
-        <li><a expr:href='data:blog.homepageUrl + &quot;search/label/Completed&quot;'>Completed Stories</a></li>
-        <li><a expr:href='data:blog.homepageUrl + &quot;search/label/Ongoing&quot;'>Ongoing Stories</a></li>
+        <li><a expr:href='data:blog.homepageUrl + &quot;?directory=genres&quot;'>Genres</a></li>
+        <li><a expr:href='data:blog.homepageUrl + &quot;?directory=voice-artists&quot;'>Voice Artists</a></li>
+        <li><a expr:href='data:blog.homepageUrl + &quot;?status=Completed&quot;'>Completed Stories</a></li>
+        <li><a expr:href='data:blog.homepageUrl + &quot;?status=Ongoing&quot;'>Ongoing Stories</a></li>
         <li><a expr:href='data:blog.homepageUrl + &quot;p/about.html&quot;'>About</a></li>
         <li><a expr:href='data:blog.homepageUrl + &quot;p/contact.html&quot;'>Contact</a></li>
       </ul>
@@ -195,7 +202,7 @@ main { padding-top: var(--nav-height); }
   </nav>
 
   <main id='main-content'>
-    <b:if cond='data:view.isSingleItem'>
+    <b:if cond='data:view.isPost'>
       <article class='container' id='storyDetail' itemscope='itemscope' itemtype='https://schema.org/CreativeWork'>
         <div class='detail-layout'>
           <aside class='detail-poster'>
@@ -217,6 +224,16 @@ main { padding-top: var(--nav-height); }
         <h2 class='section-title'>More Stories By Same Voice Artist</h2>
         <div aria-live='polite' class='related-row' id='relatedStories'></div>
       </section>
+    <b:elseif cond='data:view.isPage'/>
+      <article class='container static-page' id='staticPage'>
+        <div class='detail-card'>
+          <nav aria-label='Breadcrumb' class='breadcrumbs'>
+            <a expr:href='data:blog.homepageUrl'>Home</a><span>/</span><span><data:blog.pageName/></span>
+          </nav>
+          <h1 class='detail-title'><data:blog.pageName/></h1>
+          <div class='page-content' id='staticPageContent'></div>
+        </div>
+      </article>
     <b:else/>
       <section class='hero container'>
         <div class='hero-card'>
@@ -243,6 +260,7 @@ main { padding-top: var(--nav-height); }
             <select data-filter='language'><option value=''>All Languages</option></select>
           </div>
           <div class='result-meta'><span id='resultCount'>Loading stories…</span><span id='activeFilterText'>All stories</span></div>
+          <div class='directory-panel' id='directoryPanel' hidden='hidden'></div>
         </div>
       </section>
       <section class='container'>
@@ -426,11 +444,26 @@ async function fetchFeedEntries(feedUrl) {
   return payload.feed?.entry || [];
 }
 
+
+function getCurrentPostMetadataFromDom() {
+  const canonical = document.querySelector('link[rel="canonical"]')?.href || location.href;
+  const currentArticle = $$('.blog-posts .post').find(post => {
+    const href = $('h2 a', post)?.href;
+    return href && comparableUrl(href) === comparableUrl(canonical);
+  }) || $('.blog-posts .post');
+  if (!currentArticle) return null;
+  const title = $('h2 a', currentArticle)?.textContent || $('.detail-title')?.textContent || document.title;
+  const body = $('.post-body', currentArticle)?.innerHTML || currentArticle.innerHTML || '';
+  return parseStoryMetadata(body, title, canonical);
+}
+
 async function getCurrentPostMetadata() {
   const fallbackTitle = $('.detail-title')?.textContent || document.title;
   const canonical = document.querySelector('link[rel="canonical"]')?.href || location.href;
   const currentPath = new URL(canonical, location.origin).pathname;
   const directFeedUrl = `${getBlogBaseUrl()}feeds/posts/default?alt=json&path=${encodeURI(currentPath)}`;
+  const domStory = getCurrentPostMetadataFromDom();
+  if (domStory && (domStory.title || domStory.description || domStory.pocketUrl !== '#')) return domStory;
 
   try {
     const directEntries = await fetchFeedEntries(directFeedUrl);
@@ -498,17 +531,51 @@ function renderFilterOptions() {
   });
 }
 
-function hydrateFilterFromLabelPath() {
-  const match = location.pathname.match(/\/search\/label\/([^/?#]+)/);
-  if (!match) return;
-  const labelValue = decodeURIComponent(match[1].replace(/\+/g, ' '));
+function hydrateFilterFromUrl() {
+  const params = new URLSearchParams(location.search);
   const keys = ['genre', 'subGenre', 'voiceArtist', 'status', 'language'];
-  const matchingKey = keys.find(key => appState.stories.some(story => story[key] === labelValue));
-  if (matchingKey && !appState.filters[matchingKey]) {
-    appState.filters[matchingKey] = labelValue;
-    const select = document.querySelector(`[data-filter="${matchingKey}"]`);
-    if (select) select.value = labelValue;
+  keys.forEach(key => {
+    const value = params.get(key);
+    if (value && appState.stories.some(story => story[key] === value)) appState.filters[key] = value;
+  });
+  const labelMatch = location.pathname.match(/\/search\/label\/([^/?#]+)/);
+  if (labelMatch) {
+    const labelValue = decodeURIComponent(labelMatch[1].replace(/\+/g, ' '));
+    const matchingKey = keys.find(key => appState.stories.some(story => story[key] === labelValue));
+    if (matchingKey && !appState.filters[matchingKey]) appState.filters[matchingKey] = labelValue;
   }
+  keys.forEach(key => {
+    const select = document.querySelector(`[data-filter="${key}"]`);
+    if (select) select.value = appState.filters[key] || '';
+  });
+}
+
+function renderDirectoryPanel() {
+  const panel = $('#directoryPanel');
+  if (!panel) return;
+  const params = new URLSearchParams(location.search);
+  const directory = params.get('directory');
+  const config = directory === 'genres'
+    ? { key: 'genre', title: 'Browse Genres' }
+    : directory === 'voice-artists'
+      ? { key: 'voiceArtist', title: 'Browse Voice Artists' }
+      : null;
+  if (!config) {
+    panel.hidden = true;
+    panel.innerHTML = '';
+    return;
+  }
+  const values = [...new Set(appState.stories.map(story => story[config.key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  panel.hidden = false;
+  panel.innerHTML = `<strong class="section-title" style="width:100%;font-size:1.15rem">${config.title}</strong>` + values.map(value => `<button class="directory-chip" type="button" data-directory-key="${config.key}" data-directory-value="${escapeHtml(value)}">${escapeHtml(value)}</button>`).join('');
+  $$('.directory-chip', panel).forEach(button => button.addEventListener('click', () => {
+    appState.filters[button.dataset.directoryKey] = button.dataset.directoryValue;
+    const select = document.querySelector(`[data-filter="${button.dataset.directoryKey}"]`);
+    if (select) select.value = button.dataset.directoryValue;
+    appState.visibleCount = POCKETFM_CONFIG.INITIAL_VISIBLE_COUNT;
+    renderGrid();
+    $('#storyGrid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
 }
 
 function renderGrid() {
@@ -556,7 +623,7 @@ function initIndexPage() {
     renderGrid();
   });
   $('#loadMore')?.addEventListener('click', loadMoreStories);
-  fetchStoriesBatch().then(() => { renderFilterOptions(); hydrateFilterFromLabelPath(); renderGrid(); }).catch(error => {
+  fetchStoriesBatch().then(() => { renderFilterOptions(); hydrateFilterFromUrl(); renderDirectoryPanel(); renderGrid(); }).catch(error => {
     console.error(error);
     $('#storyGrid').innerHTML = '<div class="empty-state">Stories could not be loaded. Check that the blog feed is enabled.</div>';
   });
@@ -630,6 +697,13 @@ async function initDetailPage() {
   }
 }
 
+function initStaticPage() {
+  const target = $('#staticPageContent');
+  if (!target) return;
+  const source = $('.blog-posts .post .post-body');
+  target.innerHTML = source ? source.innerHTML : '<p>Add content to this Blogger page from the Pages editor.</p>';
+}
+
 function initNavigation() {
   const nav = $('#siteNav');
   const toggle = $('#navToggle');
@@ -642,6 +716,7 @@ function initNavigation() {
 document.addEventListener('DOMContentLoaded', () => {
   $('#yearNow').textContent = new Date().getFullYear();
   initNavigation();
+  initStaticPage();
   initIndexPage();
   initDetailPage();
 });
