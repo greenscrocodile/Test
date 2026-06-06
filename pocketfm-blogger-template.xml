@@ -326,9 +326,10 @@ function decodeHtml(html) {
 
 function cleanJsonText(value) {
   return decodeHtml(value)
+    .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove zero-width characters
     .replace(/\u00a0/g, ' ')
-    .replace(/[“”]/g, '"')
-    .replace(/[‘’]/g, "'")
+    .replace(/[“”〝〞＂]/g, '"')
+    .replace(/[‘’‛′″]/g, "'")
     .replace(/,\s*([}\]])/g, '$1')
     .trim();
 }
@@ -336,10 +337,13 @@ function cleanJsonText(value) {
 function extractJsonFromText(value) {
   const text = cleanJsonText(value);
   const storyDataMatch = text.match(/STORY_DATA_START([\s\S]*?)STORY_DATA_END/i);
-  if (storyDataMatch) return storyDataMatch[1].trim();
-  const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace > firstBrace) return text.slice(firstBrace, lastBrace + 1).trim();
+  let candidate = storyDataMatch ? storyDataMatch[1].trim() : text;
+
+  const firstBrace = candidate.indexOf('{');
+  const lastBrace = candidate.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    return candidate.slice(firstBrace, lastBrace + 1).trim();
+  }
   return '';
 }
 
@@ -408,9 +412,9 @@ function storyFromFeedEntry(entry) {
 function comparableUrl(value) {
   try {
     const url = new URL(value, location.origin);
-    return `${url.origin}${url.pathname.replace(/\/$/, '')}`;
+    return (url.hostname.replace(/^www\./, '') + url.pathname.replace(/\/$/, '')).toLowerCase();
   } catch (error) {
-    return normalize(value).replace(/\/$/, '');
+    return normalize(value).replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '').toLowerCase();
   }
 }
 
@@ -429,6 +433,15 @@ async function fetchFeedEntries(feedUrl) {
 async function getCurrentPostMetadata() {
   const fallbackTitle = $('.detail-title')?.textContent || document.title;
   const canonical = document.querySelector('link[rel="canonical"]')?.href || location.href;
+
+  // 1. Try to parse metadata directly from the DOM first (most reliable for current post)
+  const localPostBody = $('.post-body');
+  if (localPostBody) {
+    const localStory = parseStoryMetadata(localPostBody.innerHTML, fallbackTitle, canonical);
+    if (localStory && localStory.pocketUrl !== '#') return localStory;
+  }
+
+  // 2. Fallback to direct feed lookup
   const currentPath = new URL(canonical, location.origin).pathname;
   const directFeedUrl = `${getBlogBaseUrl()}feeds/posts/default?alt=json&path=${encodeURI(currentPath)}`;
 
@@ -545,7 +558,24 @@ async function loadMoreStories() {
 }
 
 function initIndexPage() {
-  if (!$('#storyGrid')) return;
+  const grid = $('#storyGrid');
+  if (!grid) return;
+
+  // 1. Pre-populate from DOM (Blogger renders posts in .blog-posts)
+  $$('.blog-posts .post').forEach(postEl => {
+    const title = postEl.querySelector('h2')?.textContent || '';
+    const link = postEl.querySelector('h2 a')?.href || '#';
+    const body = postEl.querySelector('.post-body')?.innerHTML || '';
+    const story = parseStoryMetadata(body, title, link);
+    if (story && !appState.stories.some(s => comparableUrl(s.url) === comparableUrl(story.url))) {
+      appState.stories.push(story);
+    }
+  });
+  if (appState.stories.length > 0) {
+    renderFilterOptions();
+    renderGrid();
+  }
+
   $('#storySearch')?.addEventListener('input', event => { appState.query = event.target.value; appState.visibleCount = POCKETFM_CONFIG.INITIAL_VISIBLE_COUNT; renderGrid(); });
   $$('#filterPanel select').forEach(select => select.addEventListener('change', event => { appState.filters[event.target.dataset.filter] = event.target.value; appState.visibleCount = POCKETFM_CONFIG.INITIAL_VISIBLE_COUNT; renderGrid(); }));
   $('#clearFilters')?.addEventListener('click', () => {
@@ -556,29 +586,55 @@ function initIndexPage() {
     renderGrid();
   });
   $('#loadMore')?.addEventListener('click', loadMoreStories);
-  fetchStoriesBatch().then(() => { renderFilterOptions(); hydrateFilterFromLabelPath(); renderGrid(); }).catch(error => {
+
+  fetchStoriesBatch().then(() => {
+    renderFilterOptions();
+    hydrateFilterFromLabelPath();
+    renderGrid();
+  }).catch(error => {
     console.error(error);
-    $('#storyGrid').innerHTML = '<div class="empty-state">Stories could not be loaded. Check that the blog feed is enabled.</div>';
+    if (appState.stories.length === 0) {
+      grid.innerHTML = '<div class="empty-state">Stories could not be loaded. Check that the blog feed is enabled.</div>';
+    }
   });
 }
 
 function renderDetailInfo(story) {
-  $('#detailPoster').src = story.poster || POCKETFM_CONFIG.PLACEHOLDER_POSTER;
-  $('#detailPoster').alt = `${story.title} poster`;
-  $('#detailTitle').textContent = story.title;
-  $('#detailDescription').textContent = story.description || 'Story information will be updated soon.';
-  $('#detailBadges').innerHTML = [story.genre, story.subGenre, story.language, story.status].filter(Boolean).map(value => `<span class="badge">${escapeHtml(value)}</span>`).join('');
-  const info = [
-    ['Genre', story.genre], ['Sub Genre', story.subGenre], ['Language', story.language], ['Voice Artist', story.voiceArtist],
-    ['Status', story.status], ['Episodes', story.episodes], ['Author', story.author], ['Release Year', story.releaseYear],
-    ['Listening Hours', story.listeningHours], ['Rating', story.rating]
-  ].filter(([, value]) => value);
-  $('#detailInfo').innerHTML = info.map(([label, value]) => `<div class="info-item"><span class="info-label">${escapeHtml(label)}</span><span class="info-value">${escapeHtml(value)}</span></div>`).join('');
+  if (!story) return;
+  const poster = $('#detailPoster');
+  if (poster) {
+    poster.src = story.poster || POCKETFM_CONFIG.PLACEHOLDER_POSTER;
+    poster.alt = `${story.title} poster`;
+  }
+  const title = $('#detailTitle');
+  if (title) title.textContent = story.title;
+
+  const desc = $('#detailDescription');
+  if (desc) desc.textContent = story.description || 'Story information will be updated soon.';
+
+  const badges = $('#detailBadges');
+  if (badges) {
+    badges.innerHTML = [story.genre, story.subGenre, story.language, story.status].filter(Boolean).map(value => `<span class="badge">${escapeHtml(value)}</span>`).join('');
+  }
+
+  const infoGrid = $('#detailInfo');
+  if (infoGrid) {
+    const info = [
+      ['Genre', story.genre], ['Sub Genre', story.subGenre], ['Language', story.language], ['Voice Artist', story.voiceArtist],
+      ['Status', story.status], ['Episodes', story.episodes], ['Author', story.author], ['Release Year', story.releaseYear],
+      ['Listening Hours', story.listeningHours], ['Rating', story.rating]
+    ].filter(([, value]) => value);
+    infoGrid.innerHTML = info.map(([label, value]) => `<div class="info-item"><span class="info-label">${escapeHtml(label)}</span><span class="info-value">${escapeHtml(value)}</span></div>`).join('');
+  }
+
   const pocketButton = $('#pocketButton');
-  if (!POCKETFM_CONFIG.SHOW_POCKETFM_BUTTON || !story.pocketUrl || story.pocketUrl === '#') {
-    pocketButton.style.display = 'none';
-  } else {
-    pocketButton.href = story.pocketUrl;
+  if (pocketButton) {
+    if (!POCKETFM_CONFIG.SHOW_POCKETFM_BUTTON || !story.pocketUrl || story.pocketUrl === '#') {
+      pocketButton.style.display = 'none';
+    } else {
+      pocketButton.href = story.pocketUrl;
+      pocketButton.style.display = 'inline-flex';
+    }
   }
   renderStructuredData(story);
 }
